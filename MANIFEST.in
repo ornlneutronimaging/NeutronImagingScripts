@@ -1,0 +1,2 @@
+include versioneer.py
+include neutronimaging/_version.py
