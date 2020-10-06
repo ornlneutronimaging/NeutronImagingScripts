@@ -1,0 +1,7 @@
+# Runtime dependencies for neutronimaging
+
+matplotlib
+numpy
+pandas
+scikit-beam
+tqdm
