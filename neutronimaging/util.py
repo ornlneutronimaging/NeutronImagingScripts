@@ -1,4 +1,5 @@
 #!/usr/env/bash
+# -*- coding: utf-8 -*-
 
 """
 Provide various useful helper functions that
