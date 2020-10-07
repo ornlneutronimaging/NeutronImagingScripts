@@ -131,3 +131,9 @@ if __name__ == "__main__":
     img_dir = test_data_dir
     o_norm = load_images(img_dir)
     print(type(o_norm))
+
+    # test calculate pixel occupancy probability
+    pop = calc_pixel_occupancy_probability(o_norm, df_meta)
+
+    # test image correction
+    imgs = correct_images(o_norm, df_meta)
