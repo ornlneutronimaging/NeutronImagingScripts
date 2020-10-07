@@ -63,11 +63,9 @@ def merge_meta_data(
     return _df
 
 
-def load_images(raw_imamge_dir: str) -> Type(Normalization):
+def load_images(raw_imamge_dir: str) -> type(Normalization):
     """Loading all Images into memory"""
     import glob
-    
-    from .util import in_jupyter
     o_norm = Normalization()
 
     # gather all image
@@ -96,3 +94,8 @@ if __name__ == "__main__":
     #
     df_meta = merge_meta_data(df_shutter_count, df_shutter_time, df_spectra)
     print(df_meta)
+
+    # test load images
+    img_dir = test_data_dir
+    o_norm = load_images(img_dir)
+    print(type(o_norm))
