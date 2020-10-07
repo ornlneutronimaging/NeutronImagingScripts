@@ -94,7 +94,8 @@ def calc_pixel_occupancy_probability(
     for _idx in metadata['shutter_index'].unique():
         _run_num = metadata.loc[metadata['shutter_index']==_idx, "run_num"].values
         _cnts = metadata.loc[metadata['shutter_index']==_idx, "shutter_counts"].values
-        _pops[_run_num,:,:] = _imgs[_run_num,:,:] / _cnts[:, np.newaxis, np.newaxis]
+        _tmp = _imgs[_run_num,:,:].cumsum(axis=0)
+        _pops[_run_num,:,:] = np.divide(_tmp, _cnts[:, np.newaxis, np.newaxis])
     return _pops
 
 
