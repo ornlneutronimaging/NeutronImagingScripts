@@ -6,6 +6,7 @@
 from typing import Type
 import pandas as pd
 from NeuNorm.normalization import Normalization
+from util import in_jupyter
 
 def read_shutter_count(filename: str) -> pd.DataFrame:
     """Parse in shutter count data from csv"""
