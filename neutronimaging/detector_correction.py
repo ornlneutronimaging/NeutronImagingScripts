@@ -34,6 +34,11 @@ def read_shutter_time(filename: str, offset: float=0.0) -> pd.DataFrame:
     return _df
 
 
+def read_spectra(filename: str) -> pd.DataFrame:
+    """Parse in spectra data from csv"""
+    return pd.read_csv(filename, sep='\t', names=['shutter_time', 'counts'])
+
+
 if __name__ == "__main__":
     import os
     _file_root = os.path.dirname(os.path.abspath(__file__))
@@ -45,8 +50,9 @@ if __name__ == "__main__":
     #
     shutter_time_file = os.path.join(test_data_dir, "OB_1_005_ShutterTimes.txt")
     df_shutter_time = read_shutter_time(shutter_time_file)
-    print(df_shutter_time)
-    df_shutter_time = read_shutter_time(shutter_time_file, offset=1)
+    # df_shutter_time = read_shutter_time(shutter_time_file, offset=1)
     print(df_shutter_time)
     #
-    pass
+    spectra_file = os.path.join(test_data_dir, "OB_1_005_Spectra.txt")
+    df_spectra = read_spectra(spectra_file)
+    print(df_spectra)
