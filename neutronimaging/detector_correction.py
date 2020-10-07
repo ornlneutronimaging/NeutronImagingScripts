@@ -76,8 +76,22 @@ def load_images(raw_imamge_dir: str) -> Type[Normalization]:
 
     o_norm.load(file=_img_names, notebook=in_jupyter())
     return o_norm
-    
 
+
+def calc_pixel_occupancy_probability(
+    o_norm: Type[Normalization],
+    metadata: pd.DataFrame,
+    ) -> np.ndarray:
+    """calculate pixel occupancy probability"""
+    _imgs = np.array(o_norm.data['sample']['data'])
+    _pops = np.zeros_like(_imgs)
+
+    # calculation is done on a per shutter index base
+    for _idx in metadata['shutter_index'].unique():
+        _run_num = metadata.loc[metadata['shutter_index']==_idx, "run_num"].values
+        _cnts = metadata.loc[metadata['shutter_index']==_idx, "shutter_counts"].values
+        _pops[_run_num,:,:] = _imgs[_run_num,:,:] / _cnts[:, np.newaxis, np.newaxis]
+    return _pops
 if __name__ == "__main__":
     import os
     _file_root = os.path.dirname(os.path.abspath(__file__))
