@@ -102,6 +102,7 @@ def calc_pixel_occupancy_probability(
 def correct_images(
     o_norm: Type[Normalization],
     metadata: pd.DataFrame,
+    skip_first_and_last=False,
     ) -> np.ndarray:
     """
     Correct raw images based on shutter info in metadata
@@ -109,7 +110,18 @@ def correct_images(
     _img = np.array(o_norm.data['sample']['data'])
     _pop = calc_pixel_occupancy_probability(o_norm, metadata)
     _snr = metadata["shutter_n_ratio"].values[:, np.newaxis, np.newaxis]
-    return _img/(1 - _pop)/_snr
+    _rst = _img/(1 - _pop)/_snr
+    # NOTE: The very first and last image of each frame (shutter_index)
+    #       needs specicial correction, therefore removing them from
+    #       standard pipeline if specified
+    if skip_first_and_last:
+        _tmp = []
+        for _idx in metadata['shutter_index'].unique():
+            _run_num = metadata.loc[metadata['shutter_index']==_idx, "run_num"].values
+            _tmp += list(_run_num[1:-1])
+        _idx_to_keep = np.array(_tmp)
+        _rst = _rst[_idx_to_keep, :, :]
+    return _rst
     
 
 if __name__ == "__main__":
