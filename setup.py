@@ -71,7 +71,7 @@ test_requires = read_requirements_from_file(os.path.join(THIS_DIR, 'requirements
 
 
 if __name__ == "__main__":
-    scripts = ['scripts/my_data_procssing.py']
+    scripts = ['scripts/mcp_detector_correction.py']
     setup(
         name=NAME,
         description=find_meta("description"),
