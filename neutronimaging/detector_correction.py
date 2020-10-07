@@ -3,6 +3,7 @@
 """
 """
 
+import numpy as np
 from typing import Type
 import pandas as pd
 from NeuNorm.normalization import Normalization
