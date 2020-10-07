@@ -3,9 +3,9 @@
 """
 """
 
-import numpy as np
+from typing import Type
 import pandas as pd
-
+from NeuNorm.normalization import Normalization
 
 def read_shutter_count(filename: str) -> pd.DataFrame:
     """Parse in shutter count data from csv"""
@@ -61,6 +61,20 @@ def merge_meta_data(
         _df.loc[_df["shutter_time"].between(_start, _end), "shutter_counts"] = int(_cnt)
     return _df
 
+
+def load_images(raw_imamge_dir: str) -> Type(Normalization):
+    """Loading all Images into memory"""
+    import glob
+    
+    from .util import in_jupyter
+    o_norm = Normalization()
+
+    # gather all image
+    _img_names = [me for me in glob.glob(f'{raw_imamge_dir}/*.fits') if "_SummedImg" not in me]
+
+    o_norm.load(file=_img_names, notebook=in_jupyter())
+    return o_norm
+    
 
 if __name__ == "__main__":
     import os
