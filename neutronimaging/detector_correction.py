@@ -63,7 +63,7 @@ def merge_meta_data(
     return _df
 
 
-def load_images(raw_imamge_dir: str) -> type(Normalization):
+def load_images(raw_imamge_dir: str) -> Type[Normalization]:
     """Loading all Images into memory"""
     import glob
     o_norm = Normalization()
