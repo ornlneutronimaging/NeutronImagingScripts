@@ -3,5 +3,5 @@
 matplotlib
 numpy
 pandas
-scikit-beam
+NeuNorm
 tqdm
