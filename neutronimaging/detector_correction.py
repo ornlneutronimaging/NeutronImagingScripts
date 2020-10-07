@@ -5,6 +5,7 @@
 
 import numpy as np
 from typing import Type
+from numpy.core.fromnumeric import sort
 import pandas as pd
 from NeuNorm.normalization import Normalization
 
@@ -75,6 +76,7 @@ def load_images(raw_imamge_dir: str) -> Type[Normalization]:
 
     # gather all image
     _img_names = [me for me in glob.glob(f'{raw_imamge_dir}/*.fits') if "_SummedImg" not in me]
+    _img_names.sort()
 
     o_norm.load(file=_img_names, notebook=in_jupyter())
     return o_norm
