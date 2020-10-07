@@ -29,8 +29,12 @@ def read_shutter_time(filename: str, offset: float=0.0) -> pd.DataFrame:
     # NOTE: confirm whether we should stop or skip at first 
     #       zero count location
     _df = _df[_df['end_frame']>0]
+    # NOTE: the start/end frame here is delta, we need the absolute
+    #       therefore, cumulative sum for times
     _df['start_frame'] += offset
     _df['end_frame'] += offset
+    _lbs = ['start_frame', 'end_frame']
+    _df[_lbs] = _df[_lbs].cumsum()
     return _df
 
 
