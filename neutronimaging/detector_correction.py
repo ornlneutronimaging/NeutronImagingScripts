@@ -92,6 +92,21 @@ def calc_pixel_occupancy_probability(
         _cnts = metadata.loc[metadata['shutter_index']==_idx, "shutter_counts"].values
         _pops[_run_num,:,:] = _imgs[_run_num,:,:] / _cnts[:, np.newaxis, np.newaxis]
     return _pops
+
+
+def correct_images(
+    o_norm: Type[Normalization],
+    metadata: pd.DataFrame,
+    ) -> np.ndarray:
+    """
+    Correct raw images based on shutter info in metadata
+    """
+    _img = np.array(o_norm.data['sample']['data'])
+    _pop = calc_pixel_occupancy_probability(o_norm, metadata)
+    _snr = metadata["shutter_n_ratio"].values[:, np.newaxis, np.newaxis]
+    return _img/(1 - _pop)/_snr
+    
+
 if __name__ == "__main__":
     import os
     _file_root = os.path.dirname(os.path.abspath(__file__))
