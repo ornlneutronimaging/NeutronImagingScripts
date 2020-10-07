@@ -59,10 +59,10 @@ def merge_meta_data(
     _df["shutter_index"] = -1
     _df["shutter_counts"] = -1
     for _, row in _df_shutter.iterrows():
-        _idx, _cnt, _, _start, _end = row
-        print(_idx, _cnt, _start, _end)
+        _idx, _cnt, _snr, _, _start, _end = row
         _df.loc[_df["shutter_time"].between(_start, _end), "shutter_index"] = int(_idx)
         _df.loc[_df["shutter_time"].between(_start, _end), "shutter_counts"] = int(_cnt)
+        _df.loc[_df["shutter_time"].between(_start, _end), "shutter_n_ratio"] = _snr
     return _df
 
 
