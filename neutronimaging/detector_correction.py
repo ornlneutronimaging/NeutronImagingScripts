@@ -19,7 +19,7 @@ def read_shutter_count(filename: str) -> pd.DataFrame:
     return _df[_df['shutter_counts'] > 0]
 
 
-def read_shutter_time(filename: str, offset: float=0.0) -> pd.DataFrame:
+def read_shutter_time(filename: str) -> pd.DataFrame:
     """Parse in shutter time from csv"""
     _df = pd.read_csv(
         filename,
@@ -31,10 +31,9 @@ def read_shutter_time(filename: str, offset: float=0.0) -> pd.DataFrame:
     _df = _df[_df['end_frame']>0]
     # NOTE: the start/end frame here is delta, we need the absolute
     #       therefore, cumulative sum for times
-    _df['start_frame'] += offset
-    _df['end_frame'] += offset
     _lbs = ['start_frame', 'end_frame']
-    _df[_lbs] = _df[_lbs].cumsum()
+    _tmp = _df[_lbs].values
+    _df[_lbs] = _tmp.flatten().cumsum().reshape(_tmp.shape)
     return _df
 
 
