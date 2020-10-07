@@ -1,7 +1,8 @@
 # Runtime dependencies for neutronimaging
 
+ipympl
 matplotlib
 numpy
-pandas
 NeuNorm
+pandas
 tqdm
