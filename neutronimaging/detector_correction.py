@@ -18,7 +18,9 @@ def read_shutter_count(filename: str) -> pd.DataFrame:
         sep="\t",
         names=['shutter_index', 'shutter_counts']
         )
-    return _df[_df['shutter_counts'] > 0]
+    _df = _df[_df['shutter_counts'] > 0]
+    _df["shutter_n_ratio"] = _df["shutter_counts"]/_df["shutter_counts"].values[0]
+    return _df
 
 
 def read_shutter_time(filename: str) -> pd.DataFrame:
