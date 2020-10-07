@@ -7,7 +7,7 @@ import numpy as np
 from typing import Type
 import pandas as pd
 from NeuNorm.normalization import Normalization
-from util import in_jupyter
+
 
 def read_shutter_count(filename: str) -> pd.DataFrame:
     """Parse in shutter count data from csv"""
@@ -69,6 +69,8 @@ def merge_meta_data(
 def load_images(raw_imamge_dir: str) -> Type[Normalization]:
     """Loading all Images into memory"""
     import glob
+    from neutronimaging.util import in_jupyter
+
     o_norm = Normalization()
 
     # gather all image
