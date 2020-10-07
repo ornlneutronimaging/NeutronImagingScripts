@@ -355,3 +355,4 @@ $RECYCLE.BIN/
 *.lnk
 
 # End of https://www.toptal.com/developers/gitignore/api/macos,linux,windows,pycharm,vscode,vim,python,jupyternotebooks
+.vscode/settings.json
