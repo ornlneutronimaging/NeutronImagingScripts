@@ -17,11 +17,15 @@ $ pip install NeutronImagingScripts
 
 ### Developers
 For developers, it is __highly__ recommended to setup an isolated virtual environment for this repository.
-After cloning this repository to your local machine, use the follwing commands to install dependencies
+After cloning this repository to your local machine, go to the root of this repo and use the follwing commands to install dependencies
 
 ```bash
 $ pip install -r requirements.txt
 $ pip install -r requirements_dev.txt
+```
+use the following command to install this package to your path
+```bash
+$ pip install -e .
 ```
 
 ## Usage
