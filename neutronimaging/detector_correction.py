@@ -13,8 +13,6 @@ from NeuNorm.normalization import Normalization
 
 def read_shutter_count(filename: str) -> pd.DataFrame:
     """Parse in shutter count data from csv"""
-    # TODO: confirm whether we should stop or skip at
-    #       zero count location
     _df = pd.read_csv(filename, sep="\t", names=["shutter_index", "shutter_counts"])
     _df = _df[_df["shutter_counts"] > 0]
     _df["shutter_n_ratio"] = _df["shutter_counts"] / _df["shutter_counts"].values[0]
@@ -28,8 +26,6 @@ def read_shutter_time(filename: str) -> pd.DataFrame:
         sep="\t",
         names=["shutter_index", "start_frame", "end_frame"],
     )
-    # NOTE: confirm whether we should stop or skip at first
-    #       zero count location
     _df = _df[_df["end_frame"] > 0]
     # NOTE: the start/end frame here is delta, we need the absolute
     #       therefore, cumulative sum for times
