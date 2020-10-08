@@ -7,9 +7,6 @@ __email__ = 'zhangc@ornl.gov'
 
 __license__ = 'GNU GENERAL PUBLIC LICENSE'
 
-from ._version import get_versions  # noqa: E402
-__version__ = get_versions()['version']
-del get_versions
 from ._version import get_versions
 __version__ = get_versions()['version']
 del get_versions
