@@ -1,5 +1,6 @@
 # Runtime dependencies for neutronimaging
 
+docopt
 ipympl
 matplotlib
 numpy
