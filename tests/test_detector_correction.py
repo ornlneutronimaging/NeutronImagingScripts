@@ -7,11 +7,15 @@ NetronImaging
 import os
 import pytest
 import numpy as np
-from neutronimaging.detector_correction import correct_images, load_images, read_shutter_count
-from neutronimaging.detector_correction import read_shutter_time
-from neutronimaging.detector_correction import read_spectra
-from neutronimaging.detector_correction import merge_meta_data
-from neutronimaging.detector_correction import calc_pixel_occupancy_probability
+from neutronimaging.detector_correction import (
+    calc_pixel_occupancy_probability,
+    correct_images,
+    load_images,
+    read_shutter_count,
+    read_shutter_time,
+    read_spectra,
+    merge_meta_data,
+)
 
 
 _file_root = os.path.dirname(os.path.abspath(__file__))
@@ -71,5 +75,5 @@ def test_correct_images():
     np.testing.assert_array_almost_equal(img_mean_prof, ref_img_mean_prof)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     pytest.main([__file__])
