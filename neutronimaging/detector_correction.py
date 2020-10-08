@@ -15,13 +15,9 @@ def read_shutter_count(filename: str) -> pd.DataFrame:
     """Parse in shutter count data from csv"""
     # TODO: confirm whether we should stop or skip at
     #       zero count location
-    _df =  pd.read_csv(
-        filename,
-        sep="\t",
-        names=['shutter_index', 'shutter_counts']
-        )
-    _df = _df[_df['shutter_counts'] > 0]
-    _df["shutter_n_ratio"] = _df["shutter_counts"]/_df["shutter_counts"].values[0]
+    _df = pd.read_csv(filename, sep="\t", names=["shutter_index", "shutter_counts"])
+    _df = _df[_df["shutter_counts"] > 0]
+    _df["shutter_n_ratio"] = _df["shutter_counts"] / _df["shutter_counts"].values[0]
     return _df
 
 
@@ -30,14 +26,14 @@ def read_shutter_time(filename: str) -> pd.DataFrame:
     _df = pd.read_csv(
         filename,
         sep="\t",
-        names=['shutter_index', 'start_frame', 'end_frame'],
+        names=["shutter_index", "start_frame", "end_frame"],
     )
-    # NOTE: confirm whether we should stop or skip at first 
+    # NOTE: confirm whether we should stop or skip at first
     #       zero count location
-    _df = _df[_df['end_frame']>0]
+    _df = _df[_df["end_frame"] > 0]
     # NOTE: the start/end frame here is delta, we need the absolute
     #       therefore, cumulative sum for times
-    _lbs = ['start_frame', 'end_frame']
+    _lbs = ["start_frame", "end_frame"]
     _tmp = _df[_lbs].values
     _df[_lbs] = _tmp.flatten().cumsum().reshape(_tmp.shape)
     return _df
@@ -45,14 +41,14 @@ def read_shutter_time(filename: str) -> pd.DataFrame:
 
 def read_spectra(filename: str) -> pd.DataFrame:
     """Parse in spectra data from csv"""
-    return pd.read_csv(filename, sep='\t', names=['shutter_time', 'counts'])
+    return pd.read_csv(filename, sep="\t", names=["shutter_time", "counts"])
 
 
 def merge_meta_data(
-    shutter_count: pd.DataFrame, 
-    shutter_time: pd.DataFrame, 
+    shutter_count: pd.DataFrame,
+    shutter_time: pd.DataFrame,
     spectra: pd.DataFrame,
-    ) -> pd.DataFrame:
+) -> pd.DataFrame:
     """Consolidate meta data from three different dataframes into one"""
     _df = spectra.copy(deep=True)
     _df_shutter = pd.concat([shutter_count, shutter_time], axis=1)
@@ -76,7 +72,9 @@ def load_images(raw_imamge_dir: str) -> Type[Normalization]:
     o_norm = Normalization()
 
     # gather all image
-    _img_names = [me for me in glob.glob(f'{raw_imamge_dir}/*.fits') if "_SummedImg" not in me]
+    _img_names = [
+        me for me in glob.glob(f"{raw_imamge_dir}/*.fits") if "_SummedImg" not in me
+    ]
     _img_names.sort()
 
     o_norm.load(file=_img_names, notebook=in_jupyter())
@@ -86,17 +84,17 @@ def load_images(raw_imamge_dir: str) -> Type[Normalization]:
 def calc_pixel_occupancy_probability(
     o_norm: Type[Normalization],
     metadata: pd.DataFrame,
-    ) -> np.ndarray:
+) -> np.ndarray:
     """calculate pixel occupancy probability"""
-    _imgs = np.array(o_norm.data['sample']['data'])
+    _imgs = np.array(o_norm.data["sample"]["data"])
     _pops = np.zeros_like(_imgs)
 
     # calculation is done on a per shutter index base
-    for _idx in metadata['shutter_index'].unique():
-        _run_num = metadata.loc[metadata['shutter_index']==_idx, "run_num"].values
-        _cnts = metadata.loc[metadata['shutter_index']==_idx, "shutter_counts"].values
-        _tmp = _imgs[_run_num,:,:].cumsum(axis=0)
-        _pops[_run_num,:,:] = np.divide(_tmp, _cnts[:, np.newaxis, np.newaxis])
+    for _idx in metadata["shutter_index"].unique():
+        _run_num = metadata.loc[metadata["shutter_index"] == _idx, "run_num"].values
+        _cnts = metadata.loc[metadata["shutter_index"] == _idx, "shutter_counts"].values
+        _tmp = _imgs[_run_num, :, :].cumsum(axis=0)
+        _pops[_run_num, :, :] = np.divide(_tmp, _cnts[:, np.newaxis, np.newaxis])
     return _pops
 
 
@@ -104,29 +102,30 @@ def correct_images(
     o_norm: Type[Normalization],
     metadata: pd.DataFrame,
     skip_first_and_last=False,
-    ) -> np.ndarray:
+) -> np.ndarray:
     """
     Correct raw images based on shutter info in metadata
     """
-    _img = np.array(o_norm.data['sample']['data'])
+    _img = np.array(o_norm.data["sample"]["data"])
     _pop = calc_pixel_occupancy_probability(o_norm, metadata)
     _snr = metadata["shutter_n_ratio"].values[:, np.newaxis, np.newaxis]
-    _rst = _img/(1 - _pop)/_snr
+    _rst = _img / (1 - _pop) / _snr
     # NOTE: The very first and last image of each frame (shutter_index)
     #       needs specicial correction, therefore removing them from
     #       standard pipeline if specified
     if skip_first_and_last:
         _tmp = []
-        for _idx in metadata['shutter_index'].unique():
-            _run_num = metadata.loc[metadata['shutter_index']==_idx, "run_num"].values
+        for _idx in metadata["shutter_index"].unique():
+            _run_num = metadata.loc[metadata["shutter_index"] == _idx, "run_num"].values
             _tmp += list(_run_num[1:-1])
         _idx_to_keep = np.array(_tmp)
         _rst = _rst[_idx_to_keep, :, :]
     return _rst
-    
+
 
 if __name__ == "__main__":
     import os
+
     _file_root = os.path.dirname(os.path.abspath(__file__))
     test_data_dir = os.path.join(_file_root, "../data")
     #
