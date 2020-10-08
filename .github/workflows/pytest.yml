@@ -21,13 +21,15 @@ jobs:
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
-
+        
+      # Runs a set of commands using the runners shell
+      - name: install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install -r requirements_dev.txt  
+        
       # Runs a single command using the runners shell
-      - name: run pytest on unittest
+      - name: unittest
         run: pytest tests
 
-      # Runs a set of commands using the runners shell
-#       - name: Run a multi-line script
-#         run: |
-#           echo Add other actions to build,
-#           echo test, and deploy your project.
+
