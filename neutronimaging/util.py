@@ -9,6 +9,7 @@ import os
 
 
 def in_jupyter():
+    """check if current kernel is running as notebook backend"""
     try:
         from IPython import get_ipython
 
