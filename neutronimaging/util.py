@@ -5,6 +5,7 @@
 Provide various useful helper functions that
 handles system level tasks.
 """
+import os
 
 
 def in_jupyter():
@@ -16,6 +17,18 @@ def in_jupyter():
     except NameError:
         state = False
     return state
+
+
+def probe_folder(root: str = ".") -> dict:
+    """return folder structure as a dictionary"""
+    return {
+        os.path.basename(root): [
+            os.path.join(root, me)
+            if os.path.isfile(os.path.join(root, me))
+            else probe_folder(os.path.join(root, me))
+            for me in os.listdir(root)
+        ]
+    }
 
 
 if __name__ == "__main__":
