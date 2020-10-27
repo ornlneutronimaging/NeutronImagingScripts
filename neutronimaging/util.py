@@ -49,5 +49,25 @@ def dir_tree_to_list(dir_tree: dict, flatten=True, sort=True) -> list:
     _imglist = list(_flatten_str_list(_imglist)) if flatten else _imglist
     return sorted(_imglist) if sort else _imglist
 
+
+def convert_epics_timestamp_to_rfc3339_timestamp(epics_timestamp):
+    # TIFF files from CG1D have EPICS timestamps.  From the Controls
+    # Wiki:
+    #
+    # > EPICS timestamp. The timestamp is made when the image is read
+    # > out from the camera. Format is seconds.nanoseconds since Jan 1st
+    # > 00:00 1990.
+
+    # Convert seconds since "EPICS epoch" to seconds since the "UNIX
+    # epoch" so that Python can understand it.  I got the offset by
+    # calculating the number of seconds between the two epochs at
+    # https://www.epochconverter.com/
+    EPOCH_OFFSET = 631152000
+    unix_epoch_timestamp = EPOCH_OFFSET + epics_timestamp
+
+    return unix_epoch_timestamp
+
+
+
 if __name__ == "__main__":
     pass
