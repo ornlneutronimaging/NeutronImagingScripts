@@ -32,5 +32,22 @@ def probe_folder(root: str = ".") -> dict:
     }
 
 
+def _flatten_str_list(inlist: list) -> Generator:
+    """Flatten a n-dimension nested list"""
+    for item in inlist:
+        if isinstance(item, str):
+            yield item
+        else:
+            yield from _flatten_str_list(item)
+
+
+def dir_tree_to_list(dir_tree: dict, flatten=True, sort=True) -> list:
+    """Convert a dir tree (dict) to nested list"""
+    _imglist = []
+    for k, v in dir_tree.items():
+        _imglist += [me if not isinstance(me, dict) else dir_tree_to_list(me) for me in v ]
+    _imglist = list(_flatten_str_list(_imglist)) if flatten else _imglist
+    return sorted(_imglist) if sort else _imglist
+
 if __name__ == "__main__":
     pass
