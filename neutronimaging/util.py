@@ -6,7 +6,7 @@ Provide various useful helper functions that
 handles system level tasks.
 """
 import os
-
+from typing import Generator
 
 def in_jupyter():
     """check if current kernel is running as notebook backend"""
