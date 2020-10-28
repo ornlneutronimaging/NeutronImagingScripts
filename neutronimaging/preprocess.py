@@ -17,7 +17,8 @@ from neutronimaging.npmath import find_edges_1d
 from neutronimaging.util import dir_tree_to_list
 from neutronimaging.util import probe_folder
 from neutronimaging.util import convert_epics_timestamp_to_rfc3339_timestamp
-from typing import Tuple
+from typing import List, Tuple
+from typing import Union
 
 
 def extract_metadata_tiff(tiffname: str) -> Tuple[list, list]:
@@ -104,6 +105,33 @@ def extract_metadata_tiff(tiffname: str) -> Tuple[list, list]:
 
 
 def generate_config_CG1D(
+    rootdir: Union[str, List],
+    output: str = None,
+    tolerance_aperature: float = 1.0,  # in mm
+    exclude_images: str = "calibration",
+) -> dict:
+    """frontend to allow list of rootdirs"""
+    cfg_dict = {}
+    if isinstance(rootdir, str):
+        cfg_dict = _generate_config_CG1D(rootdir, None, tolerance_aperature, exclude_images)
+    elif isinstance(rootdir, list):
+        for this_dir in rootdir:
+            cfg_dict[this_dir] = _generate_config_CG1D(this_dir, None, tolerance_aperature, exclude_images)
+    else:
+        raise ValueError(f"input dir has to be a string a list of strings")
+    
+    # dump dict to desired format if output file name provided
+    if output is not None:
+        if "json" in output.split(".")[-1].lower():
+            with open(output, 'w') as outputf:
+                json.dump(cfg_dict, outputf, indent=2, sort_keys=True)
+        else:
+            raise NotImplementedError
+    
+    return cfg_dict
+
+
+def _generate_config_CG1D(
     rootdir: str,
     output: str = None,
     tolerance_aperature: float = 1.0,  # in mm
