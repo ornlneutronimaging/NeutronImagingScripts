@@ -113,21 +113,25 @@ def generate_config_CG1D(
     """frontend to allow list of rootdirs"""
     cfg_dict = {}
     if isinstance(rootdir, str):
-        cfg_dict = _generate_config_CG1D(rootdir, None, tolerance_aperature, exclude_images)
+        cfg_dict = _generate_config_CG1D(
+            rootdir, None, tolerance_aperature, exclude_images
+        )
     elif isinstance(rootdir, list):
         for this_dir in rootdir:
-            cfg_dict[this_dir] = _generate_config_CG1D(this_dir, None, tolerance_aperature, exclude_images)
+            cfg_dict[this_dir] = _generate_config_CG1D(
+                this_dir, None, tolerance_aperature, exclude_images
+            )
     else:
         raise ValueError(f"input dir has to be a string a list of strings")
-    
+
     # dump dict to desired format if output file name provided
     if output is not None:
         if "json" in output.split(".")[-1].lower():
-            with open(output, 'w') as outputf:
+            with open(output, "w") as outputf:
                 json.dump(cfg_dict, outputf, indent=2, sort_keys=True)
         else:
             raise NotImplementedError
-    
+
     return cfg_dict
 
 
@@ -269,7 +273,7 @@ def _generate_config_CG1D(
     # dump dict to desired format if output file name provided
     if output is not None:
         if "json" in output.split(".")[-1].lower():
-            with open(output, 'w') as outputf:
+            with open(output, "w") as outputf:
                 json.dump(cfg_dict, outputf, indent=2, sort_keys=True)
         elif "csv" in output.split(".")[-1].lower():
             df.to_csv(output, sep="\t", index=False)
