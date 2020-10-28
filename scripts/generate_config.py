@@ -23,7 +23,7 @@ if __name__ == "__main__":
 
     # parsing input
     print('Parsing input')
-    rootdir = args['<input_dir>']
+    rootdir = args['<input_dir>'].split(',')
     output = args['<output_file>']
     tor = 1.0 if args['--tolerance'] is None else float(args['--tolerance'])
 
