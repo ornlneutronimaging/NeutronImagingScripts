@@ -106,8 +106,8 @@ def generate_config_CG1D(
     rootdir: str,
     output: str = None,
     tolerance_aperature: float = 1.0,  # in mm
-    exclude_images: str='calibration',
-    ) -> dict:
+    exclude_images: str = "calibration",
+) -> dict:
     # build the metadata DataFrame
     img_list = dir_tree_to_list(probe_folder(rootdir), flatten=True, sort=True)
     img_list = [me for me in img_list if exclude_images.lower() not in me.lower()]
@@ -122,7 +122,7 @@ def generate_config_CG1D(
     df = pd.DataFrame(data=md_data, columns=header)
 
     # need to add a few extra feature vector for clustering
-    lbs = ['aperture_HR', 'aperture_HL', 'aperture_VT', 'aperture_VB']
+    lbs = ["aperture_HR", "aperture_HL", "aperture_VT", "aperture_VB"]
     lbs_binned = [f"{lb}_binned" for lb in lbs]
     for lb, lb_binned in zip(lbs, lbs_binned):
         df.loc[:, lb_binned] = 0
@@ -131,78 +131,117 @@ def generate_config_CG1D(
     # - exposure_time
     # - (detector_name, aperture_[HR|HL|VT|VB])
     # and populate dict
-    exposure_times = df['exposure_time'].unique()
+    exposure_times = df["exposure_time"].unique()
     cfg_dict = {}
     for exposure in exposure_times:
         data_dict = cfg_dict[exposure] = {}
         # first, we need to bin the interval to form the category
         for lb, lb_binned in zip(lbs, lbs_binned):
-            vals = df.loc[df['exposure_time']==exposure,lb].unique()
+            vals = df.loc[df["exposure_time"] == exposure, lb].unique()
             bin_edges = list(find_edges_1d(vals, atol=tolerance_aperature))
             for _low, _up in bin_edges:
-                df.loc[(df['exposure_time']==exposure)&(df[lb].between(_low, _up)),lb_binned] = df.loc[(df['exposure_time']==exposure)&(df[lb].between(_low, _up)),lb].mean()
+                df.loc[
+                    (df["exposure_time"] == exposure) & (df[lb].between(_low, _up)),
+                    lb_binned,
+                ] = df.loc[
+                    (df["exposure_time"] == exposure) & (df[lb].between(_low, _up)), lb
+                ].mean()
         # second, find the categories
-        detector_names = df.loc[df['exposure_time']==exposure, 'detector_manufacturer'].unique()
-        aperture_HRs   = df.loc[df['exposure_time']==exposure, 'aperture_HR_binned'].unique()
-        aperture_HLs   = df.loc[df['exposure_time']==exposure, 'aperture_HL_binned'].unique()
-        aperture_VTs   = df.loc[df['exposure_time']==exposure, 'aperture_VT_binned'].unique()
-        aperture_VBs   = df.loc[df['exposure_time']==exposure, 'aperture_VB_binned'].unique()
-        categories = itertools.product(detector_names, aperture_HRs, aperture_HLs, aperture_VTs, aperture_VBs)
+        detector_names = df.loc[
+            df["exposure_time"] == exposure, "detector_manufacturer"
+        ].unique()
+        aperture_HRs = df.loc[
+            df["exposure_time"] == exposure, "aperture_HR_binned"
+        ].unique()
+        aperture_HLs = df.loc[
+            df["exposure_time"] == exposure, "aperture_HL_binned"
+        ].unique()
+        aperture_VTs = df.loc[
+            df["exposure_time"] == exposure, "aperture_VT_binned"
+        ].unique()
+        aperture_VBs = df.loc[
+            df["exposure_time"] == exposure, "aperture_VB_binned"
+        ].unique()
+        categories = itertools.product(
+            detector_names, aperture_HRs, aperture_HLs, aperture_VTs, aperture_VBs
+        )
         # last, populate each categroy
-        metadata_info_keys = ['detector_manufacturer', 'aperture_HR', 'aperture_HL', 'aperture_VT', 'aperture_VB']
-        list_sample_keys = ['filename', 'time_stamp', 'time_stamp_user_format']
+        metadata_info_keys = [
+            "detector_manufacturer",
+            "aperture_HR",
+            "aperture_HL",
+            "aperture_VT",
+            "aperture_VB",
+        ]
+        list_sample_keys = ["filename", "time_stamp", "time_stamp_user_format"]
         for i, me in enumerate(categories):
             _tmp = data_dict[f"config{i}"] = {}
             # generate metadata_infos (the common core)
-            _tmp['metadata_infos'] = {k:v for k, v in zip(metadata_info_keys, me)}
+            _tmp["metadata_infos"] = {k: v for k, v in zip(metadata_info_keys, me)}
             # generate list of images (data_type: Raw)
             # generate list of ob (data_type: OB)
             # generate list of df (data_type: DF)
-            for groupname, datatype in zip(('list_sample', 'list_ob', 'list_df'),('Raw', 'OB', 'DF')):
+            for groupname, datatype in zip(
+                ("list_sample", "list_ob", "list_df"), ("Raw", "OB", "DF")
+            ):
                 _df_tmp = df.loc[
-                    (df['exposure_time']==exposure)
-                    &
-                    (df['detector_manufacturer']==me[0])
-                    &
-                    (df['aperture_HR_binned']==me[1])
-                    &
-                    (df['aperture_HL_binned']==me[2])
-                    &
-                    (df['aperture_VT_binned']==me[3])
-                    &
-                    (df['aperture_VB_binned']==me[4])
-                    &
-                    (df['data_type']==datatype)
-                    , list_sample_keys]
-                _tmp[groupname] = {index: {k:v for k,v in zip(list_sample_keys,row)} for index, row in enumerate(_df_tmp.to_numpy())}
+                    (df["exposure_time"] == exposure)
+                    & (df["detector_manufacturer"] == me[0])
+                    & (df["aperture_HR_binned"] == me[1])
+                    & (df["aperture_HL_binned"] == me[2])
+                    & (df["aperture_VT_binned"] == me[3])
+                    & (df["aperture_VB_binned"] == me[4])
+                    & (df["data_type"] == datatype),
+                    list_sample_keys,
+                ]
+                _tmp[groupname] = {
+                    index: {k: v for k, v in zip(list_sample_keys, row)}
+                    for index, row in enumerate(_df_tmp.to_numpy())
+                }
 
             # generate for first images
             # generate for last images
-            _tmp['first_images'] = {}
-            _tmp['last_images'] = {}
-            for groupname, datatype in zip(('sample', 'ob', 'df'),('Raw', 'OB', 'DF')):
+            _tmp["first_images"] = {}
+            _tmp["last_images"] = {}
+            for groupname, datatype in zip(("sample", "ob", "df"), ("Raw", "OB", "DF")):
                 _df_tmp = df.loc[
-                    (df['exposure_time']==exposure)
-                    &
-                    (df['detector_manufacturer']==me[0])
-                    &
-                    (df['aperture_HR_binned']==me[1])
-                    &
-                    (df['aperture_HL_binned']==me[2])
-                    &
-                    (df['aperture_VT_binned']==me[3])
-                    &
-                    (df['aperture_VB_binned']==me[4])
-                    &
-                    (df['data_type']==datatype),
-                    list_sample_keys]
-                _tmp['first_images'][groupname] = {k:v for k,v in zip(list_sample_keys, _df_tmp.sort_values('time_stamp').to_numpy()[0])} if _df_tmp.size>0 else {}
-                _tmp['last_images'][groupname] = {k:v for k,v in zip(list_sample_keys, _df_tmp.sort_values('time_stamp').to_numpy()[-1])} if _df_tmp.size>0 else {}
+                    (df["exposure_time"] == exposure)
+                    & (df["detector_manufacturer"] == me[0])
+                    & (df["aperture_HR_binned"] == me[1])
+                    & (df["aperture_HL_binned"] == me[2])
+                    & (df["aperture_VT_binned"] == me[3])
+                    & (df["aperture_VB_binned"] == me[4])
+                    & (df["data_type"] == datatype),
+                    list_sample_keys,
+                ]
+                _tmp["first_images"][groupname] = (
+                    {
+                        k: v
+                        for k, v in zip(
+                            list_sample_keys,
+                            _df_tmp.sort_values("time_stamp").to_numpy()[0],
+                        )
+                    }
+                    if _df_tmp.size > 0
+                    else {}
+                )
+                _tmp["last_images"][groupname] = (
+                    {
+                        k: v
+                        for k, v in zip(
+                            list_sample_keys,
+                            _df_tmp.sort_values("time_stamp").to_numpy()[-1],
+                        )
+                    }
+                    if _df_tmp.size > 0
+                    else {}
+                )
 
     # dump dict to desired format if output file name provided
     if output is not None:
         if "json" in output.split(".")[-1].lower():
             import json
+
             json.dump(cfg_dict, output, indent=2, sort_keys=True)
         elif "csv" in output.split(".")[-1].lower():
             df.to_csv(output, sep="\t", index=False)
