@@ -113,12 +113,12 @@ def generate_config_CG1D(
     """frontend to allow list of rootdirs"""
     cfg_dict = {}
     if isinstance(rootdir, str):
-        cfg_dict = _generate_config_CG1D(
+        cfg_dict, _ = _generate_config_CG1D(
             rootdir, None, tolerance_aperature, exclude_images
         )
     elif isinstance(rootdir, list):
         for this_dir in rootdir:
-            cfg_dict[this_dir] = _generate_config_CG1D(
+            cfg_dict[this_dir], _ = _generate_config_CG1D(
                 this_dir, None, tolerance_aperature, exclude_images
             )
     else:
@@ -140,7 +140,7 @@ def _generate_config_CG1D(
     output: str = None,
     tolerance_aperature: float = 1.0,  # in mm
     exclude_images: str = "calibration",
-) -> dict:
+) -> Tuple[dict, pd.DataFrame]:
     # build the metadata DataFrame
     img_list = dir_tree_to_list(probe_folder(rootdir), flatten=True, sort=True)
     img_list = [me for me in img_list if exclude_images.lower() not in me.lower()]
@@ -280,7 +280,7 @@ def _generate_config_CG1D(
         else:
             raise NotImplementedError
 
-    return cfg_dict
+    return cfg_dict, df
 
 
 if __name__ == "__main__":
