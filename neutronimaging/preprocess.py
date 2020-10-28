@@ -8,6 +8,7 @@ This module contains necessary preprocessing toolkits for neutron imaging, inclu
 -  
 """
 
+import json
 import itertools
 import pandas as pd
 from PIL import Image
@@ -240,8 +241,6 @@ def generate_config_CG1D(
     # dump dict to desired format if output file name provided
     if output is not None:
         if "json" in output.split(".")[-1].lower():
-            import json
-
             json.dump(cfg_dict, output, indent=2, sort_keys=True)
         elif "csv" in output.split(".")[-1].lower():
             df.to_csv(output, sep="\t", index=False)
