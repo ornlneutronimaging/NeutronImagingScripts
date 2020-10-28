@@ -241,7 +241,8 @@ def generate_config_CG1D(
     # dump dict to desired format if output file name provided
     if output is not None:
         if "json" in output.split(".")[-1].lower():
-            json.dump(cfg_dict, output, indent=2, sort_keys=True)
+            with open(output, 'w') as outputf:
+                json.dump(cfg_dict, outputf, indent=2, sort_keys=True)
         elif "csv" in output.split(".")[-1].lower():
             df.to_csv(output, sep="\t", index=False)
         else:
