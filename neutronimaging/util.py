@@ -8,6 +8,7 @@ handles system level tasks.
 import os
 from typing import Generator
 
+
 def in_jupyter():
     """check if current kernel is running as notebook backend"""
     try:
@@ -45,7 +46,9 @@ def dir_tree_to_list(dir_tree: dict, flatten=True, sort=True) -> list:
     """Convert a dir tree (dict) to nested list"""
     _imglist = []
     for k, v in dir_tree.items():
-        _imglist += [me if not isinstance(me, dict) else dir_tree_to_list(me) for me in v ]
+        _imglist += [
+            me if not isinstance(me, dict) else dir_tree_to_list(me) for me in v
+        ]
     _imglist = list(_flatten_str_list(_imglist)) if flatten else _imglist
     return sorted(_imglist) if sort else _imglist
 
@@ -66,7 +69,6 @@ def convert_epics_timestamp_to_rfc3339_timestamp(epics_timestamp):
     unix_epoch_timestamp = EPOCH_OFFSET + epics_timestamp
 
     return unix_epoch_timestamp
-
 
 
 if __name__ == "__main__":
