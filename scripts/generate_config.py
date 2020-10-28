@@ -22,10 +22,10 @@ if __name__ == "__main__":
     args = docopt(__doc__, help=True, version="Configuration Generateor 1.0")
 
     # parsing input
-    print('Parsing input')
-    rootdir = args['<input_dir>'].split(',')
-    output = args['<output_file>']
-    tor = 1.0 if args['--tolerance'] is None else float(args['--tolerance'])
+    print("Parsing input")
+    rootdir = args["<input_dir>"].split(",")
+    output = args["<output_file>"]
+    tor = 1.0 if args["--tolerance"] is None else float(args["--tolerance"])
 
     # generate config
     generate_config_CG1D(rootdir, output=output, tolerance_aperature=tor)
