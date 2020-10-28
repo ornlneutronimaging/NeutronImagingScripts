@@ -1,0 +1,2 @@
+CG1D:Mot:LiftTable,CG1D:Mot:ShortAxis,CG1D:Mot:LongAxis,CG1D:Mot:RotTable,CG1D:Mot:SmallRotTable,CG1D:Det:A1:TIFF1:FilePath,CG1D:Det:A1:TIFF1:FileName,CG1D:Det:A1:AcquireTime,Camera
+"range(240,245,2.5)",,"range(100,105,2.5)",,,,test_b,1,CCD
