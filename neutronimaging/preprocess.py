@@ -270,6 +270,32 @@ def _generate_config_CG1D(
                     else {}
                 )
 
+            # generate time range
+            # NOTE: need confirmation from original developer
+            _tmp["time_range_s"] = {}
+            first_sample_time = (
+                _tmp["first_images"]["sample"]["time_stamp"]
+                if "time_stamp" in _tmp["first_images"]["sample"].keys()
+                else 0.0
+            )
+            first_ob_time = (
+                _tmp["first_images"]["ob"]["time_stamp"]
+                if "time_stamp" in _tmp["first_images"]["ob"].keys()
+                else 0.0
+            )
+            _tmp["time_range_s"]["before"] = max(first_sample_time - first_ob_time, 0)
+            last_sample_time = (
+                _tmp["last_images"]["sample"]["time_stamp"]
+                if "time_stamp" in _tmp["last_images"]["sample"].keys()
+                else 0.0
+            )
+            last_ob_time = (
+                _tmp["first_images"]["ob"]["time_stamp"]
+                if "time_stamp" in _tmp["first_images"]["ob"].keys()
+                else 0.0
+            )
+            _tmp["time_range_s"]["after"] = max(last_sample_time - last_ob_time, 0)
+
     # dump dict to desired format if output file name provided
     if output is not None:
         if "json" in output.split(".")[-1].lower():
