@@ -54,6 +54,7 @@ def extract_metadata_tiff(tiffname: str) -> Tuple[list, list]:
     time_stamp_user_format = datetime.fromtimestamp(time_stamp).strftime(
         "%Y-%m-%d %H:%M:%S"
     )
+
     header = [
         "filename",
         "time_stamp",
@@ -104,9 +105,12 @@ def generate_config_CG1D(
     output: str = None,
     tolerance_aperature: float = 1.0,
 ) -> dict:
-    # build the metadata DataFrame 
+    # build the metadata DataFrame
     img_list = dir_tree_to_list(probe_folder(rootdir), flatten=True, sort=True)
     meta_data = (extract_metadata_tiff(me) for me in img_list if ".tif" in me.lower())
+    # NOTE:
+    # If the image list gets way too long, we can consider using multiprocessing
+    # to speed up the parsing process as it is mostly an IO/thread bound process.
     md_data = [md for md, _ in meta_data]
     _, header = extract_metadata_tiff(img_list[0])
     _df = pd.DataFrame(data=md_data, columns=header)
@@ -120,9 +124,11 @@ def generate_config_CG1D(
     # dump dict to json if output file name provided
     if output is not None:
         import json
+
         json.dump(cfg_dict, output, indent=2, sort_keys=True)
 
     return cfg_dict
+
 
 if __name__ == "__main__":
     pass
