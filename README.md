@@ -35,6 +35,32 @@ $ pip install -e .
 Examples of using this package as a Python module are provided as Jupyter Notebooks insdie the `example` folder.
 
 ### Use as a commandline tool
+
+#### _Generate Configuration File for Data Reduction_
+To generate the `json` file that is needed for subsequent data reduction, use
+```bash
+$ generate_config.py IPTS-20267 IPTS-20267.json
+```
+where `IPTS-20267` is the top level directory that contains all the data that need to be considered as one experiment.
+If you would like to have __multiple__ experiment configuration files __nested__ in one `json` file, simply use
+```bash
+$ generate_config.py IPTS-20267,IPTS-20268 IPTS-20267-20268.json
+```
+which will produce a `json` file with the following structure
+```json
+{
+    "IPTS-20267": {"CONFIG_DATA"},
+    "IPTS-20268": {"CONFIG_DATA"},
+}
+```
+
+The default tolerance for the categorization with respect to aperture positions is 1mm.
+However, you can change the default value by specify it as below
+```bash
+$ generate_config.py IPTS-20267 IPTS-20267.json --tolerance=2
+```
+
+#### _MCP Detector correction_
 After installing this package, the scripts located in `scripts` should be visible in your Path.
 Simpy type `mcp_detector_correction.py`, you should see the following
 ```bash
