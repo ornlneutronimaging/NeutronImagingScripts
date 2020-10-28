@@ -9,7 +9,7 @@ import os
 from typing import Generator
 
 
-def in_jupyter():
+def in_jupyter() -> bool:
     """check if current kernel is running as notebook backend"""
     try:
         from IPython import get_ipython
@@ -53,7 +53,7 @@ def dir_tree_to_list(dir_tree: dict, flatten=True, sort=True) -> list:
     return sorted(_imglist) if sort else _imglist
 
 
-def convert_epics_timestamp_to_rfc3339_timestamp(epics_timestamp):
+def convert_epics_timestamp_to_rfc3339_timestamp(epics_timestamp: float) -> float:
     # TIFF files from CG1D have EPICS timestamps.  From the Controls
     # Wiki:
     #
