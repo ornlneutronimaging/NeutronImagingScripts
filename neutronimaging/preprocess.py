@@ -11,12 +11,13 @@ This module contains necessary preprocessing toolkits for neutron imaging, inclu
 import pandas as pd
 from PIL import Image
 from datetime import datetime
+from neutronimaging.util import dir_tree_to_list
 from neutronimaging.util import probe_folder
 from neutronimaging.util import convert_epics_timestamp_to_rfc3339_timestamp
 from typing import Tuple
 
 
-def extract_metadata(tiffname: str) -> Tuple[list, list]:
+def extract_metadata_tiff(tiffname: str) -> Tuple[list, list]:
     # default offset from the TIFF file
     # - str entry
     DATAACQMODE = 65018  # 'DataAcqModeStr:White Beam',
