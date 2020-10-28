@@ -6,8 +6,6 @@ NetronImaging
 """
 
 import numpy as np
-from numpy import testing
-from numpy.testing._private.utils import assert_almost_equal
 import pytest
 from neutronimaging.npmath import find_edges_1d
 
