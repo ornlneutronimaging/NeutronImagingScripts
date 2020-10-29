@@ -146,7 +146,11 @@ def _generate_config_CG1D(
     # build the metadata DataFrame
     img_list = []
     for _dir in (image_dir, openbeam_dir, darkfield_dir):
-        img_list += [me for me in dir_tree_to_list(probe_folder(_dir), flatten=True, sort=True) if ".tif" in me.lower()]
+        img_list += [
+            me
+            for me in dir_tree_to_list(probe_folder(_dir), flatten=True, sort=True)
+            if ".tif" in me.lower()
+        ]
     meta_data = (extract_metadata_tiff(me) for me in img_list)
 
     # NOTE:
@@ -176,12 +180,10 @@ def _generate_config_CG1D(
             bin_edges = list(find_edges_1d(vals, atol=tolerance_aperature))
             for _low, _up in bin_edges:
                 df.loc[
-                    (df["exposure_time"] == exposure) 
-                    & (df[lb].between(_low, _up)),
+                    (df["exposure_time"] == exposure) & (df[lb].between(_low, _up)),
                     lb_binned,
                 ] = df.loc[
-                    (df["exposure_time"] == exposure) 
-                    & (df[lb].between(_low, _up)),
+                    (df["exposure_time"] == exposure) & (df[lb].between(_low, _up)),
                     lb,
                 ].mean()
         # second, find the categories
