@@ -234,10 +234,14 @@ def _generate_config_CG1D(
                     & (df["data_type"] == datatype),
                     list_sample_keys,
                 ]
-                _tmp[groupname] = {
-                    index: {k: v for k, v in zip(list_sample_keys, row)}
-                    for index, row in enumerate(_df_tmp.to_numpy())
-                }
+                _tmp[groupname] = [
+                    {k: v for k, v in zip(list_sample_keys, row)}
+                    for _, row in enumerate(_df_tmp.to_numpy())
+                ]
+                # _tmp[groupname] = {
+                #     index: {k: v for k, v in zip(list_sample_keys, row)}
+                #     for index, row in enumerate(_df_tmp.to_numpy())
+                # }
 
             # generate for first images
             # generate for last images
