@@ -11,7 +11,7 @@ Usage:
 Options:
     -h --help           print this message
     --version           print version info
-    --tolerance=<tor>   tolerance for slit position during clustering  [defualt: 1]
+    --tolerance=<tor>   tolerance for slit position during clustering  [default (mm): 1]
 """
 
 from docopt import docopt
