@@ -8,6 +8,7 @@ This module contains necessary preprocessing toolkits for neutron imaging, inclu
 -  
 """
 
+import warnings
 import json
 import itertools
 import pandas as pd
@@ -114,24 +115,23 @@ def generate_config_CG1D(
     """frontend to allow list of rootdirs"""
     cfg_dict = {}
     if isinstance(image_dir, str):
-        cfg_dict, _ = _generate_config_CG1D(
+        cfg_dict, df = _generate_config_CG1D(
             image_dir, openbeam_dir, darkfield_dir, None, tolerance_aperature
         )
     elif isinstance(image_dir, list):
+        df_list = []
         for this_dir in image_dir:
-            cfg_dict[this_dir], _ = _generate_config_CG1D(
+            cfg_dict[this_dir], df = _generate_config_CG1D(
                 this_dir, openbeam_dir, darkfield_dir, None, tolerance_aperature
             )
+            df_list.append(df)
+        df = pd.concat(df_list)
     else:
         raise ValueError(f"input dir has to be a string a list of strings")
 
     # dump dict to desired format if output file name provided
     if output is not None:
-        if "json" in output.split(".")[-1].lower():
-            with open(output, "w") as outputf:
-                json.dump(cfg_dict, outputf, indent=2, sort_keys=True)
-        else:
-            raise NotImplementedError
+        _write_config_to_disk(cfg_dict, output, df)
 
     return cfg_dict
 
@@ -305,15 +305,28 @@ def _generate_config_CG1D(
 
     # dump dict to desired format if output file name provided
     if output is not None:
-        if "json" in output.split(".")[-1].lower():
-            with open(output, "w") as outputf:
-                json.dump(cfg_dict, outputf, indent=2, sort_keys=True)
-        elif "csv" in output.split(".")[-1].lower():
-            df.to_csv(output, sep="\t", index=False)
-        else:
-            raise NotImplementedError
+        _write_config_to_disk(cfg_dict, output, df)
 
     return cfg_dict, df
+
+
+def _write_config_to_disk(
+    cfg_dict: dict,
+    filename: str,
+    dataframe: pd.DataFrame,
+) -> None:
+    if "json" in filename.split(".")[-1].lower():
+        with open(filename, "w") as outputf:
+            json.dump(cfg_dict, outputf, indent=2, sort_keys=True)
+    elif "csv" in filename.split(".")[-1].lower():
+        dataframe.to_csv(filename, sep="\t", index=False)
+    else:
+        warnings.warn(
+            f"Unsupported file extension provided:{filename}, falling back to json"
+        )
+        filename += ".json"
+        with open(filename, "w") as outputf:
+            json.dump(cfg_dict, outputf, indent=2, sort_keys=True)
 
 
 if __name__ == "__main__":
