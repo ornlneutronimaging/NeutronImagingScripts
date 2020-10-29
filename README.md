@@ -35,6 +35,53 @@ $ pip install -e .
 Examples of using this package as a Python module are provided as Jupyter Notebooks insdie the `example` folder.
 
 ### Use as a commandline tool
+
+#### _Generate Configuration File for Data Reduction_
+To generate the `json` file that is needed for subsequent data reduction, use
+```bash
+$ generate_config.py \
+    IPTS-20267/raw/radiographs \
+    IPTS-20267/raw/ob \
+    IPTS-20267/raw/df \
+    IPTS-20267.json
+```
+where 
+ - `IPTS-20267/raw/radiographs` contains the raw images
+ - `IPTS-20267/raw/ob` contains open beam images (white field)
+ - `IPTS-20267/raw/df` contains dark field images 
+
+If you would like to have __multiple__ experiment configuration files __nested__ in one `json` file, simply use
+```bash
+$ generate_config.py \
+    IPTS-20267/raw/radiographs,IPTS-20267-2/raw/radiographs \
+    IPTS-20267/raw/ob \
+    IPTS-20267/raw/df \
+    IPTS-20267.json
+```
+notice that:
+- You can have more than one folder for raw images, but they need to be within the same string separated by `,`.
+- You can have only __one__ folder for open beam directory
+- You cna have only __one__ folder for dark field directory
+
+The command above will yield a `json` file with the following structure
+```json
+{
+    "IPTS-20267": {"CONFIG_DATA"},
+    "IPTS-20268": {"CONFIG_DATA"},
+}
+```
+
+The default tolerance for the categorization with respect to aperture positions is 1mm.
+However, you can change the default value by specify it as below
+```bash
+$ generate_config.py \
+    IPTS-20267/raw/radiographs \
+    IPTS-20267/raw/ob \
+    IPTS-20267/raw/df \
+    IPTS-20267.json --tolerance=2
+```
+
+#### _MCP Detector correction_
 After installing this package, the scripts located in `scripts` should be visible in your Path.
 Simpy type `mcp_detector_correction.py`, you should see the following
 ```bash
