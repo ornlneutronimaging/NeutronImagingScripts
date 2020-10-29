@@ -315,14 +315,15 @@ def _write_config_to_disk(
     filename: str,
     dataframe: pd.DataFrame,
 ) -> None:
-    if "json" in filename.split(".")[-1].lower():
+    _file_extension = filename.split(".")[-1]
+    if "json" in _file_extension.lower():
         with open(filename, "w") as outputf:
             json.dump(cfg_dict, outputf, indent=2, sort_keys=True)
-    elif "csv" in filename.split(".")[-1].lower():
+    elif "csv" in _file_extension.lower():
         dataframe.to_csv(filename, sep="\t", index=False)
     else:
         warnings.warn(
-            f"Unsupported file extension provided:{filename}, falling back to json"
+            f"Unsupported file extension provided: {_file_extension}, falling back to json"
         )
         filename += ".json"
         with open(filename, "w") as outputf:
