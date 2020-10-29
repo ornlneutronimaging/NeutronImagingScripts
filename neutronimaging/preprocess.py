@@ -105,21 +105,22 @@ def extract_metadata_tiff(tiffname: str) -> Tuple[list, list]:
 
 
 def generate_config_CG1D(
-    rootdir: Union[str, List],
+    image_dir: Union[str, List],
+    openbeam_dir: str,
+    darkfield_dir: str,
     output: str = None,
     tolerance_aperature: float = 1.0,  # in mm
-    exclude_images: str = "calibration",
 ) -> dict:
     """frontend to allow list of rootdirs"""
     cfg_dict = {}
-    if isinstance(rootdir, str):
+    if isinstance(image_dir, str):
         cfg_dict, _ = _generate_config_CG1D(
-            rootdir, None, tolerance_aperature, exclude_images
+            image_dir, openbeam_dir, darkfield_dir, None, tolerance_aperature
         )
-    elif isinstance(rootdir, list):
-        for this_dir in rootdir:
+    elif isinstance(image_dir, list):
+        for this_dir in image_dir:
             cfg_dict[this_dir], _ = _generate_config_CG1D(
-                this_dir, None, tolerance_aperature, exclude_images
+                this_dir, openbeam_dir, darkfield_dir, None, tolerance_aperature
             )
     else:
         raise ValueError(f"input dir has to be a string a list of strings")
@@ -136,15 +137,16 @@ def generate_config_CG1D(
 
 
 def _generate_config_CG1D(
-    rootdir: str,
+    image_dir: str,
+    openbeam_dir: str,
+    darkfield_dir: str,
     output: str = None,
     tolerance_aperature: float = 1.0,  # in mm
-    exclude_images: str = "calibration",
 ) -> Tuple[dict, pd.DataFrame]:
     # build the metadata DataFrame
-    img_list = dir_tree_to_list(probe_folder(rootdir), flatten=True, sort=True)
-    img_list = [me for me in img_list if exclude_images.lower() not in me.lower()]
-    img_list = [me for me in img_list if ".tif" in me.lower()]
+    img_list = []
+    for _dir in (image_dir, openbeam_dir, darkfield_dir):
+        img_list += [me for me in dir_tree_to_list(probe_folder(_dir), flatten=True, sort=True) if ".tif" in me.lower()]
     meta_data = (extract_metadata_tiff(me) for me in img_list)
 
     # NOTE:
@@ -174,10 +176,13 @@ def _generate_config_CG1D(
             bin_edges = list(find_edges_1d(vals, atol=tolerance_aperature))
             for _low, _up in bin_edges:
                 df.loc[
-                    (df["exposure_time"] == exposure) & (df[lb].between(_low, _up)),
+                    (df["exposure_time"] == exposure) 
+                    & (df[lb].between(_low, _up)),
                     lb_binned,
                 ] = df.loc[
-                    (df["exposure_time"] == exposure) & (df[lb].between(_low, _up)), lb
+                    (df["exposure_time"] == exposure) 
+                    & (df[lb].between(_low, _up)),
+                    lb,
                 ].mean()
         # second, find the categories
         detector_names = df.loc[

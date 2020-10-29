@@ -4,7 +4,7 @@
 """Configuration Generator
 
 Usage:
-    generate_config.py  <input_dir> <output_file> [--tolerance=<tor>]
+    generate_config.py  <image_dir> <openbeam_dir> <darkfield_dir> <output_file> [--tolerance=<tor>]
     generate_config.py  (-h | --help)
     generate_config.py  --version
 
@@ -23,9 +23,11 @@ if __name__ == "__main__":
 
     # parsing input
     print("Parsing input")
-    rootdir = args["<input_dir>"].split(",")
+    imgdir = args["<image_dir>"].split(",")
+    obdir = args["<openbeam_dir>"]  # only one allowed here
+    dfdir = args["<darkfield_dir>"]  # only one allowed here
     output = args["<output_file>"]
     tor = 1.0 if args["--tolerance"] is None else float(args["--tolerance"])
 
     # generate config
-    generate_config_CG1D(rootdir, output=output, tolerance_aperature=tor)
+    generate_config_CG1D(imgdir, obdir, dfdir, output=output, tolerance_aperature=tor)

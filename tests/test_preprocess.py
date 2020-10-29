@@ -16,8 +16,10 @@ def test_generate_config_CG1D():
     # NOTE:
     # we can only test if the function call will work, but the filepath
     # could vary, which makes comparing two dict difficult
-    rootdir = os.path.join(test_data_dir, "IPTS-20267")
-    generate_config_CG1D(rootdir)
+    imgdir = os.path.join(test_data_dir, "IPTS-20267/raw/radiographs")
+    opdir = os.path.join(test_data_dir, "IPTS-20267/raw/ob")
+    dfdir = os.path.join(test_data_dir, "IPTS-20267/raw/df")
+    generate_config_CG1D(imgdir, opdir, dfdir)
 
 
 if __name__ == "__main__":
