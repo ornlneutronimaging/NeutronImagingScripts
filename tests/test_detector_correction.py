@@ -35,7 +35,8 @@ def test_skipping_meta_data():
     test_output = pd.DataFrame(
         [['c', 3]]
         + [['d', 4]]*2,
-        columns=['letter', 'shutter_index']
+        columns=['letter', 'shutter_index'],
+        index=[4, 7, 8]
     )
     skipped = skipping_meta_data(test_input)
     assert (skipped == test_output).all(None)
