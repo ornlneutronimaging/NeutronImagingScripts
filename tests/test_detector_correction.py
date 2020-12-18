@@ -30,12 +30,12 @@ def test_skipping_meta_data():
         + [['b', 2]]*2
         + [['c', 3]]*3
         + [['d', 4]]*4,
-        columns=['letter', 'num']
+        columns=['letter', 'shutter_index']
     )
     test_output = pd.DataFrame(
         [['c', 3]]
         + [['d', 4]]*2,
-        columns=['letter', 'num']
+        columns=['letter', 'shutter_index']
     )
     skipped = skipping_meta_data(test_input)
     assert (skipped == test_output).all(None)
