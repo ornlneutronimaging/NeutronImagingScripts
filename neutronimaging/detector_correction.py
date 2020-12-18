@@ -60,6 +60,14 @@ def merge_meta_data(
     return _df
 
 
+def skipping_meta_data(meta: pd.DataFrame) -> pd.DataFrame:
+    """Skips first and last or each run in metadata"""
+    _by_shutter = meta.groupby(['shutter_index'])
+    # groupby returns (group_num, dataframe), thus the [1] first
+    _with_skips = [item[1][1:-1] for item in _by_shutter]
+    return pd.concat(_with_skips)
+
+
 def load_images(raw_imamge_dir: str) -> Type[Normalization]:
     """Loading all Images into memory"""
     import glob
