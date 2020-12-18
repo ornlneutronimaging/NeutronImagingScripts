@@ -17,7 +17,6 @@ Options:
 
 import glob
 import os
-import pandas as pd
 import shutil
 from docopt import docopt
 from pathlib import Path
@@ -28,6 +27,7 @@ from neutronimaging.detector_correction import (
     read_shutter_time,
     read_spectra,
     merge_meta_data,
+    skipping_meta_data,
 )
 
 
@@ -91,11 +91,11 @@ if __name__ == "__main__":
     shutil.copyfile(shutter_time_file, out_shutter_time)
     # handle proper spectra parsing
     if skip_first_last_img:
-        pd.concat(
-            [run[1][1:-1] for run in df_meta.groupby(['shutter_index'])]
-        ).to_csv(out_spectra_file,
-                 columns=['shutter_time', 'counts'],
-                 index=False,
-                 index_label=False)
+        skipping_meta_data(df_meta).to_csv(
+            out_spectra_file,
+            columns=['shutter_time', 'counts'],
+            index=False,
+            index_label=False
+        )
     else:
         shutil.copyfile(spectra_file, out_spectra_file)
