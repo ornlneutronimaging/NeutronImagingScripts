@@ -16,6 +16,8 @@ Options:
 """
 
 import glob
+import os
+import shutil
 from docopt import docopt
 from pathlib import Path
 from neutronimaging.detector_correction import (
@@ -25,6 +27,7 @@ from neutronimaging.detector_correction import (
     read_shutter_time,
     read_spectra,
     merge_meta_data,
+    skipping_meta_data,
 )
 
 
@@ -78,3 +81,21 @@ if __name__ == "__main__":
     print(f"Writing data to {output_dir}")
     o_norm.data["sample"]["data"] = img_corrected
     o_norm.export(folder=output_dir, data_type="sample")
+    out_shutter_count = os.path.join(output_dir,
+                                     os.path.basename(shutter_count_file))
+    out_shutter_time = os.path.join(output_dir,
+                                    os.path.basename(shutter_time_file))
+    out_spectra_file = os.path.join(output_dir,
+                                    os.path.basename(spectra_file))
+    shutil.copyfile(shutter_count_file, out_shutter_count)
+    shutil.copyfile(shutter_time_file, out_shutter_time)
+    # handle proper spectra parsing
+    if skip_first_last_img:
+        skipping_meta_data(df_meta).to_csv(
+            out_spectra_file,
+            columns=['shutter_time', 'counts'],
+            index=False,
+            index_label=False
+        )
+    else:
+        shutil.copyfile(spectra_file, out_spectra_file)

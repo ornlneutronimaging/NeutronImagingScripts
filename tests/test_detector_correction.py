@@ -6,6 +6,7 @@ NetronImaging
 """
 import os
 import pytest
+import pandas as pd
 import numpy as np
 from neutronimaging.detector_correction import (
     calc_pixel_occupancy_probability,
@@ -15,11 +16,30 @@ from neutronimaging.detector_correction import (
     read_shutter_time,
     read_spectra,
     merge_meta_data,
+    skipping_meta_data,
 )
 
 
 _file_root = os.path.dirname(os.path.abspath(__file__))
 test_data_dir = os.path.join(_file_root, "../data")
+
+
+def test_skipping_meta_data():
+    test_input = pd.DataFrame(
+        [['a', 1]]
+        + [['b', 2]]*2
+        + [['c', 3]]*3
+        + [['d', 4]]*4,
+        columns=['letter', 'shutter_index']
+    )
+    test_output = pd.DataFrame(
+        [['c', 3]]
+        + [['d', 4]]*2,
+        columns=['letter', 'shutter_index'],
+        index=[4, 7, 8]
+    )
+    skipped = skipping_meta_data(test_input)
+    assert (skipped == test_output).all(None)
 
 
 def test_calc_pixel_occupancy_probability():
