@@ -78,7 +78,7 @@ if __name__ == "__main__":
     setup(
         name=NAME,
         description=find_meta("description"),
-        license=find_meta("license"),
+        license="BSD",
         url=find_meta("url"),
         version=versioneer.get_version(),
         cmdclass=versioneer.get_cmdclass(),
