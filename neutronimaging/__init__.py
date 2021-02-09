@@ -5,7 +5,7 @@ __url__ = "https://code.ornl.gov/sns-hfir-scse/imaging/neutronimaging"
 __author__ = "C.Zhang"
 __email__ = "zhangc@ornl.gov"
 
-__license__ = "GNU GENERAL PUBLIC LICENSE"
+# __license__ = "GNU GENERAL PUBLIC LICENSE"
 
 from ._version import get_versions
 

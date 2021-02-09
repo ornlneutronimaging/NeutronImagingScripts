@@ -6,7 +6,7 @@ from setuptools import setup, find_packages
 
 NAME = "NeutronImaging"
 META_PATH = os.path.join("neutronimaging", "__init__.py")
-KEYWORDS = ["class", "attribute", "boilerplate"]
+KEYWORDS = "neutron imaging mcp"
 CLASSIFIERS = [
     "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
