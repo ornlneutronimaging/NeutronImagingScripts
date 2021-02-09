@@ -11,7 +11,7 @@ CLASSIFIERS = [
     "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
     "Natural Language :: English",
-    "'License :: OSI Approved :: BSD License",
+    "License :: OSI Approved :: GNU Lesser General Public License v2 (LGPLv2)",
     "Operating System :: OS Independent",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
@@ -78,7 +78,7 @@ if __name__ == "__main__":
     setup(
         name=NAME,
         description=find_meta("description"),
-        license="BSD",
+        license='BSD',
         url=find_meta("url"),
         version=versioneer.get_version(),
         cmdclass=versioneer.get_cmdclass(),
