@@ -78,6 +78,7 @@ if __name__ == "__main__":
     setup(
         name=NAME,
         description=find_meta("description"),
+        long_description_content_type="text/markdown",
         license='BSD',
         url=find_meta("url"),
         version=versioneer.get_version(),
