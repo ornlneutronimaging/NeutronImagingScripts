@@ -67,7 +67,7 @@ The command above will yield a `json` file with the following structure
 ```json
 {
     "IPTS-20267": {"CONFIG_DATA"},
-    "IPTS-20268": {"CONFIG_DATA"},
+    "IPTS-20268": {"CONFIG_DATA"}
 }
 ```
 
