@@ -13,7 +13,7 @@ at Oak Ridge National Laboratory.
 Install the package (once published on pip) with
 
 ```bash
-$ pip install NeutronImagingScripts
+$ pip install NeutronImaging
 ```
 
 ### Developers
