@@ -40,6 +40,14 @@ if __name__ == "__main__":
     output_dir = args["<output_dir>"]
     skip_first_last_img = args["--skipimg"]
     verbose = args["--verbose"]
+
+    # in some rare instances, the MCP creates a duplicate set of the run in the same folder
+    # we need to only consider the first set in the autoreduction
+    shutter_count_files = glob.glob(input_dir + "/*_ShutterCount.txt")
+    nbr_of_duplicated_runs = len(shutter_count_files)
+    if nbr_of_duplicated_runs > 1:
+        print(f"The folder contains {nbr_of_duplicated_runs} sets of the same data!")
+
     shutter_count_file = glob.glob(input_dir + "/*_ShutterCount.txt")[0]
     shutter_time_file = glob.glob(input_dir + "/*_ShutterTimes.txt")[0]
     spectra_file = glob.glob(input_dir + "/*_Spectra.txt")[0]
@@ -64,7 +72,7 @@ if __name__ == "__main__":
 
     # load images
     print("Loading images into memory")
-    o_norm = load_images(input_dir)
+    o_norm = load_images(input_dir, nbr_of_duplicated_runs)
 
     # perform image correction
     print("Perform correction")

@@ -5,7 +5,7 @@ import versioneer  # https://github.com/warner/python-versioneer
 from setuptools import setup, find_packages
 
 NAME = "NeutronImaging"
-META_PATH = os.path.join("neutronimaging", "__init__.py")
+META_PATH = os.path.join("../ToFImaging/jupyter_notebooks/code/neutronimaging", "__init__.py")
 KEYWORDS = "neutron imaging mcp"
 CLASSIFIERS = [
     "Development Status :: 5 - Production/Stable",

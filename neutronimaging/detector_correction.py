@@ -68,8 +68,12 @@ def skipping_meta_data(meta: pd.DataFrame) -> pd.DataFrame:
     return pd.concat(_with_skips)
 
 
-def load_images(raw_imamge_dir: str) -> Type[Normalization]:
-    """Loading all Images into memory"""
+def load_images(raw_imamge_dir: str, nbr_of_duplicated_runs: int = 1) -> Type[Normalization]:
+    """Loading all Images into memory
+
+    if the nbr_of_duplicated_runs is higher than 1 (default value) that means the MCP produced by
+    mistake other sets of the same data, those must be removed and not used in the reconstruction
+    """
     import glob
     from neutronimaging.util import in_jupyter
 
@@ -80,6 +84,9 @@ def load_images(raw_imamge_dir: str) -> Type[Normalization]:
         me for me in glob.glob(f"{raw_imamge_dir}/*.fits") if "_SummedImg" not in me
     ]
     _img_names.sort()
+
+    final_index = int(len(_img_names) / nbr_of_duplicated_runs)
+    _img_names = _img_names[0: final_index]
 
     o_norm.load(file=_img_names, notebook=in_jupyter())
     return o_norm
@@ -131,7 +138,7 @@ if __name__ == "__main__":
     import os
 
     _file_root = os.path.dirname(os.path.abspath(__file__))
-    test_data_dir = os.path.join(_file_root, "../data")
+    test_data_dir = os.path.join(_file_root, "../../../../NeutronImagingScripts/data")
     #
     shutter_counts_file = os.path.join(test_data_dir, "OB_1_005_ShutterCount.txt")
     df_shutter_count = read_shutter_count(shutter_counts_file)
