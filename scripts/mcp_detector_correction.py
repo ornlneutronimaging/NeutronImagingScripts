@@ -51,6 +51,7 @@ if __name__ == "__main__":
     shutter_count_file = glob.glob(input_dir + "/*_ShutterCount.txt")[0]
     shutter_time_file = glob.glob(input_dir + "/*_ShutterTimes.txt")[0]
     spectra_file = glob.glob(input_dir + "/*_Spectra.txt")[0]
+    summed_file = glob.glob(input_dir + "/*_SummedImg.fits")[0]
 
     # validation
     print("Validating input arguments")
@@ -59,6 +60,7 @@ if __name__ == "__main__":
     assert Path(shutter_count_file).exists()
     assert Path(shutter_time_file).exists()
     assert Path(spectra_file).exists()
+    assert Path(summed_file).exists()
 
     # process metadata
     print("Processing metadata")
@@ -95,8 +97,11 @@ if __name__ == "__main__":
                                     os.path.basename(shutter_time_file))
     out_spectra_file = os.path.join(output_dir,
                                     os.path.basename(spectra_file))
+    out_summed_file = os.path.join(output_dir, 
+                                    os.path.basename(summed_file))                                
     shutil.copyfile(shutter_count_file, out_shutter_count)
     shutil.copyfile(shutter_time_file, out_shutter_time)
+    shutil.copyfile(summed_file, out_summed_file)
     # handle proper spectra parsing
     if skip_first_last_img:
         skipping_meta_data(df_meta).to_csv(
