@@ -359,3 +359,5 @@ $RECYCLE.BIN/
 
 # pycharm
 .idea
+
+.envrc
