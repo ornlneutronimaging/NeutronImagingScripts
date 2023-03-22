@@ -14,10 +14,11 @@ Options:
     --version    print version info
     --verbose    verbose output
 """
-
 import glob
 import os
 import shutil
+import logging
+from datetime import datetime
 from docopt import docopt
 from pathlib import Path
 from neutronimaging.detector_correction import (
@@ -35,18 +36,34 @@ if __name__ == "__main__":
     args = docopt(__doc__, help=True, version="MCP Detector Correction 1.0")
 
     # parsing input
-    print("Parsing input")
     input_dir = args["<input_dir>"]
     output_dir = args["<output_dir>"]
     skip_first_last_img = args["--skipimg"]
     verbose = args["--verbose"]
+
+    # setup logging (terminal and file)
+    timestr = datetime.now().strftime("%Y%m%d_%H%M%S")
+    log_file = os.path.join(args["<output_dir>"], f"mcp_detector_correction_{timestr}.log")
+    logging.basicConfig(
+        filename=log_file,
+        level=logging.INFO,
+        format="%(asctime)s %(levelname)s %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
+    )
+    logging.getLogger().addHandler(logging.StreamHandler())
+
+    logging.info("MCP Detector Correction")
+    logging.info(f"input_dir: {input_dir}")
+    logging.info(f"output_dir: {output_dir}")
+    logging.info(f"skip_first_last_img: {skip_first_last_img}")
+    logging.info(f"verbose: {verbose}")
 
     # in some rare instances, the MCP creates a duplicate set of the run in the same folder
     # we need to only consider the first set in the autoreduction
     shutter_count_files = glob.glob(input_dir + "/*_ShutterCount.txt")
     nbr_of_duplicated_runs = len(shutter_count_files)
     if nbr_of_duplicated_runs > 1:
-        print(f"The folder contains {nbr_of_duplicated_runs} sets of the same data!")
+        logging.info(f"The folder contains {nbr_of_duplicated_runs} sets of the same data!")
 
     shutter_count_file = glob.glob(input_dir + "/*_ShutterCount.txt")[0]
     shutter_time_file = glob.glob(input_dir + "/*_ShutterTimes.txt")[0]
@@ -54,7 +71,7 @@ if __name__ == "__main__":
     summed_file = glob.glob(input_dir + "/*_SummedImg.fits")[0]
 
     # validation
-    print("Validating input arguments")
+    logging.info("Validating input arguments")
     assert Path(input_dir).exists()
     assert Path(output_dir).exists()
     assert Path(shutter_count_file).exists()
@@ -63,32 +80,32 @@ if __name__ == "__main__":
     assert Path(summed_file).exists()
 
     # process metadata
-    print("Processing metadata")
+    logging.info("Processing metadata")
     df_meta = merge_meta_data(
         read_shutter_count(shutter_count_file),
         read_shutter_time(shutter_time_file),
         read_spectra(spectra_file),
     )
     if verbose:
-        print(df_meta)
+        logging.info(df_meta)
 
     # load images
-    print("Loading images into memory")
+    logging.info("Loading images into memory")
     o_norm = load_images(input_dir, nbr_of_duplicated_runs)
 
     # perform image correction
-    print("Perform correction")
+    logging.info("Perform correction")
     img_corrected = correct_images(
         o_norm,
         df_meta,
         skip_first_and_last=skip_first_last_img,
     )
-    print("corrected image summary")
-    print(f"\tdimension:\t{img_corrected.shape}")
-    print(f"\ttype:\t{img_corrected.dtype}")
+    logging.info("corrected image summary")
+    logging.info(f"\tdimension:\t{img_corrected.shape}")
+    logging.info(f"\ttype:\t{img_corrected.dtype}")
 
     # export results
-    print(f"Writing data to {output_dir}")
+    logging.info(f"Writing data to {output_dir}")
     o_norm.data["sample"]["data"] = img_corrected
     o_norm.export(folder=output_dir, data_type="sample")
     out_shutter_count = os.path.join(output_dir,
