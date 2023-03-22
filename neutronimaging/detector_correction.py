@@ -1,12 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-
-"""
-"""
+"""Detector correction for MCPTimepix2."""
 
 import numpy as np
 from typing import Type
-from numpy.core.fromnumeric import sort
 import pandas as pd
 from NeuNorm.normalization import Normalization
 
@@ -62,13 +59,15 @@ def merge_meta_data(
 
 def skipping_meta_data(meta: pd.DataFrame) -> pd.DataFrame:
     """Skips first and last or each run in metadata"""
-    _by_shutter = meta.groupby(['shutter_index'])
+    _by_shutter = meta.groupby(["shutter_index"])
     # groupby returns (group_num, dataframe), thus the [1] first
     _with_skips = [item[1][1:-1] for item in _by_shutter]
     return pd.concat(_with_skips)
 
 
-def load_images(raw_imamge_dir: str, nbr_of_duplicated_runs: int = 1) -> Type[Normalization]:
+def load_images(
+    raw_imamge_dir: str, nbr_of_duplicated_runs: int = 1
+) -> Type[Normalization]:
     """Loading all Images into memory
 
     if the nbr_of_duplicated_runs is higher than 1 (default value) that means the MCP produced by
@@ -86,7 +85,7 @@ def load_images(raw_imamge_dir: str, nbr_of_duplicated_runs: int = 1) -> Type[No
     _img_names.sort()
 
     final_index = int(len(_img_names) / nbr_of_duplicated_runs)
-    _img_names = _img_names[0: final_index]
+    _img_names = _img_names[0:final_index]
 
     o_norm.load(file=_img_names, notebook=in_jupyter())
     return o_norm
