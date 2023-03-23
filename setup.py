@@ -17,8 +17,7 @@ CLASSIFIERS = [
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
-    "Programming Language :: Python :: 3.10"
-    "Programming Language :: Python :: Implementation :: CPython",
+    "Programming Language :: Python :: 3.10" "Programming Language :: Python :: Implementation :: CPython",
     "Programming Language :: Python :: Implementation :: PyPy",
     "Topic :: Software Development :: Libraries :: Python Modules",
 ]
@@ -27,13 +26,13 @@ THIS_DIR = os.path.abspath(os.path.dirname(__file__))
 
 
 def read_requirements_from_file(filepath):
-    '''Read a list of requirements from the given file and split into a
+    """Read a list of requirements from the given file and split into a
     list of strings. It is assumed that the file is a flat
     list with one requirement per line.
     :param filepath: Path to the file to read
     :return: A list of strings containing the requirements
-    '''
-    with open(filepath, 'r') as req_file:
+    """
+    with open(filepath, "r") as req_file:
         return req_file.readlines()
 
 
@@ -56,30 +55,27 @@ def find_meta(meta):
     # print (r"^__{meta}__ = ['\"]([^'\"]*)['\"]".format(meta=meta))
     # print (META_FILE)
     # print (re.M)
-    meta_match = re.search(
-        r"^__{meta}__ = ['\"]([^'\"]*)['\"]".format(meta=meta),
-        META_FILE, re.M
-    )
+    meta_match = re.search(r"^__{meta}__ = ['\"]([^'\"]*)['\"]".format(meta=meta), META_FILE, re.M)
     if meta_match:
         return meta_match.group(1)
     raise RuntimeError("Unable to find __{meta}__ string.".format(meta=meta))
 
 
-install_requires = read_requirements_from_file(os.path.join(THIS_DIR, 'requirements.txt'))
-test_requires = read_requirements_from_file(os.path.join(THIS_DIR, 'requirements_dev.txt'))
+install_requires = read_requirements_from_file(os.path.join(THIS_DIR, "requirements.txt"))
+test_requires = read_requirements_from_file(os.path.join(THIS_DIR, "requirements_dev.txt"))
 
 
 if __name__ == "__main__":
     scripts = [
-        'scripts/mars_detector_correction.py',
-        'scripts/mcp_detector_correction.py',
-        'scripts/generate_config.py',
+        "scripts/mars_detector_correction.py",
+        "scripts/mcp_detector_correction.py",
+        "scripts/generate_config.py",
     ]
     setup(
         name=NAME,
         description=find_meta("description"),
         long_description_content_type="text/markdown",
-        license='BSD',
+        license="BSD",
         url=find_meta("url"),
         version=versioneer.get_version(),
         cmdclass=versioneer.get_cmdclass(),
@@ -89,7 +85,7 @@ if __name__ == "__main__":
         maintainer_email=find_meta("email"),
         keywords=KEYWORDS,
         long_description=read("README.md"),
-        packages=find_packages(exclude=['tests', 'tests.*']),
+        packages=find_packages(exclude=["tests", "tests.*"]),
         zip_safe=False,
         classifiers=CLASSIFIERS,
         install_requires=install_requires,
@@ -97,5 +93,5 @@ if __name__ == "__main__":
         package_dir={},
         package_data={},
         scripts=scripts,
-        setup_requires=['pytest-runner'],
+        setup_requires=["pytest-runner"],
     )
