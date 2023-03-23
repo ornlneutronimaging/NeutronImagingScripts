@@ -5,6 +5,7 @@
 import os
 import pytest
 from neutronimaging.metadata_handler import MetadataHandler
+from neutronimaging.mars.metadata_handler import MetadataName
 
 def test_get_time_stamp():
     """Test get_time_stamp method."""
@@ -76,15 +77,15 @@ def test_get_metadata():
     # case_2: tiff file, specific metadata
     # setup
     list_metadata = [
-        65026,
-        65027,
+        MetadataName.DETECTOR_MANUFACTURER,
+        MetadataName.EXPOSURE_TIME,
     ]
     # process
     metadata = MetadataHandler.get_metadata(file_name, list_metadata)
     # test
     assert len(metadata) == 2
-    assert metadata[65026] == "ManufacturerStr:Andor"
-    assert metadata[65027] == "ExposureTime:30.000000"
+    assert metadata[MetadataName.DETECTOR_MANUFACTURER] == "ManufacturerStr:Andor"
+    assert metadata[MetadataName.EXPOSURE_TIME] == "ExposureTime:30.000000"
 
 def test_retrieve_metadata():
     # case_0: empty list
@@ -113,16 +114,16 @@ def test_retrieve_metadata():
     # case_2: 2 tiff file, specific metadata
     # setup
     list_metadata = [
-        65026,
-        65027,
+        MetadataName.DETECTOR_MANUFACTURER,
+        MetadataName.EXPOSURE_TIME,
     ]
     # process
     metadata = MetadataHandler.retrieve_metadata(file_list, list_metadata)
     # test
     assert len(metadata) == 1
     assert len(metadata[file_name]) == 2
-    assert metadata[file_name][65026] == "ManufacturerStr:Andor"
-    assert metadata[file_name][65027] == "ExposureTime:30.000000"
+    assert metadata[file_name][MetadataName.DETECTOR_MANUFACTURER] == "ManufacturerStr:Andor"
+    assert metadata[file_name][MetadataName.EXPOSURE_TIME] == "ExposureTime:30.000000"
 
 def test_get_value_of_metadata_key():
     # case_0: empty file

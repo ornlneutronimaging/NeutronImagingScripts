@@ -120,7 +120,7 @@ class MetadataHandler:
         ----------
         filename : str
             file name
-        list_metadata : list
+        list_metadata : list of MetaDataName (enum)
             list of metadata to extract
 
         Returns
@@ -139,7 +139,7 @@ class MetadataHandler:
             return result
 
         for _meta in list_metadata:
-            result[_meta] = metadata.get(_meta)
+            result[_meta] = metadata.get(_meta.value)
 
         image.close()
         return result
@@ -152,7 +152,7 @@ class MetadataHandler:
         ----------
         list_files : list
             list of files
-        list_metadata : list
+        list_metadata : list of MetaDataName (enum)
             list of metadata to extract
 
         Returns
