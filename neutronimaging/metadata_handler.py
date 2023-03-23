@@ -5,6 +5,7 @@ This module is adapted from the original implementation at:
 
 https://github.com/neutronimaging/python_notebooks/blob/next/notebooks/__code/metadata_handler.py
 """
+import logging
 from PIL import Image
 import datetime
 import os
@@ -12,11 +13,12 @@ from typing import Optional
 from collections import OrderedDict
 from tqdm import tqdm
 
+
 class MetadataHandler:
     """Generic metadata handler."""
 
     @staticmethod
-    def get_time_stamp(file_name: str = "", ext: str = "tif") -> int:
+    def get_time_stamp(file_name: str = "", ext: str = "tif") -> float:
         """Get time stamp from file name.
 
         Parameters
@@ -28,7 +30,7 @@ class MetadataHandler:
 
         Returns
         -------
-        time_stamp : int
+        time_stamp : float
         """
         if ext in ["tif", "tiff"]:
             try:
@@ -41,23 +43,21 @@ class MetadataHandler:
                 except:
                     time_stamp = o_dict[65000]
 
-                time_stamp = (
-                    MetadataHandler._convert_epics_timestamp_to_rfc3339_timestamp(
-                        time_stamp
-                    )
-                )
+                time_stamp = MetadataHandler._convert_epics_timestamp_to_rfc3339_timestamp(time_stamp)
 
             except:
+                logging.warning(
+                    f"Failed to get time stamp from {file_name}'s header, using file creation time instead."
+                )
                 time_stamp = os.path.getctime(file_name)
         elif ext == "fits":
             time_stamp = os.path.getctime(file_name)
         elif ext == "jpg":
             time_stamp = os.path.getctime(file_name)
-
         else:
-            raise NotImplemented
+            raise NotImplementedError("File type not supported")
 
-        return
+        return time_stamp
 
     @staticmethod
     def _convert_epics_timestamp_to_rfc3339_timestamp(epics_timestamp: int) -> int:
@@ -94,8 +94,20 @@ class MetadataHandler:
         return unix_epoch_timestamp
 
     @staticmethod
-    def convert_to_human_readable_format(timestamp: int) -> str:
-        """Convert the unix time stamp into a human readable time format
+    def convert_to_human_readable_format(timestamp: float) -> str:
+        """Convert the unix time stamp into a human readable time format.
+
+        Parameters
+        ----------
+        timestamp : float
+            unix time stamp
+
+        Returns
+        -------
+        human_readable_format : str
+
+        Notes
+        -----
         Format return will look like  "2018-01-29 10:30:25"
         """
         return datetime.datetime.fromtimestamp(timestamp).strftime("%Y-%m-%d %H:%M:%S")
@@ -127,7 +139,7 @@ class MetadataHandler:
             return result
 
         for _meta in list_metadata:
-            result[_meta] = metadata.get(_meta.value)
+            result[_meta] = metadata.get(_meta)
 
         image.close()
         return result
@@ -151,17 +163,13 @@ class MetadataHandler:
 
         _dict = OrderedDict()
         for _file in list_files:
-            _meta = MetadataHandler.get_metadata(
-                filename=_file, list_metadata=list_metadata
-            )
+            _meta = MetadataHandler.get_metadata(filename=_file, list_metadata=list_metadata)
             _dict[_file] = _meta
 
         return _dict
 
     @staticmethod
-    def get_value_of_metadata_key(
-        filename: str = "", list_key: Optional[list] = None
-    ) -> dict:
+    def get_value_of_metadata_key(filename: str = "", list_key: Optional[list] = None) -> dict:
         """Get value of metadata key.
 
         Parameters
@@ -191,9 +199,7 @@ class MetadataHandler:
         return result
 
     @staticmethod
-    def retrieve_value_of_metadata_key(
-        list_files: list=[], list_key: list=[]
-    ) -> dict:
+    def retrieve_value_of_metadata_key(list_files: list = [], list_key: list = []) -> dict:
         """Retrieve value of metadata key.
 
         Parameters
@@ -212,9 +218,7 @@ class MetadataHandler:
 
         _dict = OrderedDict()
         for _file in tqdm(list_files):
-            _meta = MetadataHandler.get_value_of_metadata_key(
-                filename=_file, list_key=list_key
-            )
+            _meta = MetadataHandler.get_value_of_metadata_key(filename=_file, list_key=list_key)
             _dict[_file] = _meta
 
         return _dict
