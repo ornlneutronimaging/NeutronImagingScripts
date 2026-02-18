@@ -9,6 +9,7 @@ from typing import Type
 from numpy.core.fromnumeric import sort
 import pandas as pd
 from NeuNorm.normalization import Normalization
+from timepix_geometry_correction.correct import TimepixGeometryCorrection
 
 
 def read_shutter_count(filename: str) -> pd.DataFrame:
@@ -48,6 +49,7 @@ def merge_meta_data(
     """Consolidate meta data from three different dataframes into one"""
     _df = spectra.copy(deep=True)
     _df_shutter = pd.concat([shutter_count, shutter_time], axis=1)
+    print(f"{_df_shutter =}")
     _df["run_num"] = spectra.index
     # initialize fields
     _df["shutter_index"] = -1
@@ -131,6 +133,12 @@ def correct_images(
             _tmp += list(_run_num[1:-1])
         _idx_to_keep = np.array(_tmp)
         _rst = _rst[_idx_to_keep, :, :]
+    
+    # correct chips alignment
+    print(f"Performing chips geometry correction")
+    o_corrector = TimepixGeometryCorrection(images_path=_rst)
+    _rst = o_corrector.correct(display=False)
+    
     return _rst
 
 
@@ -165,3 +173,4 @@ if __name__ == "__main__":
 
     # test image correction
     imgs = correct_images(o_norm, df_meta)
+    
