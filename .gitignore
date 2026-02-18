@@ -358,4 +358,6 @@ $RECYCLE.BIN/
 .vscode/settings.json
 
 # pycharm
-.idea
+.idea# pixi environments
+.pixi/*
+!.pixi/config.toml
