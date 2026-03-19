@@ -135,9 +135,9 @@ def correct_images(
         _rst = _rst[_idx_to_keep, :, :]
     
     # correct chips alignment
-    print(f"Performing chips geometry correction")
-    o_corrector = TimepixGeometryCorrection(raw_images=_rst)
-    _rst = o_corrector.correct(display=False)
+    #print(f"Performing chips geometry correction")
+    #o_corrector = TimepixGeometryCorrection(raw_images=_rst)
+    #_rst = o_corrector.correct(display=False)
     
     return _rst
 
