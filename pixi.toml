@@ -12,6 +12,8 @@ python = ">=3.14.3,<3.15"
 neunorm = ">=1.6.12,<2"
 numpy = ">=2.4.2,<3"
 tqdm = ">=4.67.3,<5"
+docopt = ">=0.6.2,<0.7"
 
 [pypi-dependencies]
-timepix-geometry-correction = { git = "https://github.com/ornlneutronimaging/timepix_geometry_correction.git", branch="main"}
+neutronimaging = { path = ".", editable = true }
+timepix-geometry-correction = { git = "https://github.com/ornlneutronimaging/timepix_geometry_correction.git", branch = "main" }
