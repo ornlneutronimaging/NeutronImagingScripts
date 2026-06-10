@@ -99,6 +99,11 @@ if __name__ == "__main__":
         zip_safe=False,
         classifiers=CLASSIFIERS,
         install_requires=install_requires,
+        extras_require={
+            # Timepix chip-geometry correction (--chipcorrection /
+            # apply_chip_correction=True); only pre-releases on PyPI so far
+            "chipcorrection": ["timepix-geometry-correction>=0.2.0.dev7"],
+        },
         tests_require=test_requires,
         package_dir={},
         package_data={},

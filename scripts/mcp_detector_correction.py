@@ -4,15 +4,17 @@
 """MCP Detector Correction.
 
 Usage:
-    mcp_detector_correction [--skipimg] [--verbose] <input_dir> <output_dir>
+    mcp_detector_correction [--skipimg] [--chipcorrection] [--verbose] <input_dir> <output_dir>
     mcp_detector_correction (-h | --help)
     mcp_detector_correction --version
 
 Options:
-    --skipimg    skip first and last image
-    -h --help    print this message
-    --version    print version info
-    --verbose    verbose output
+    --skipimg         skip first and last image
+    --chipcorrection  additionally apply Timepix chip-geometry correction
+                      (requires the optional timepix-geometry-correction package)
+    -h --help         print this message
+    --version         print version info
+    --verbose         verbose output
 """
 
 import glob
@@ -85,6 +87,7 @@ if __name__ == "__main__":
         images,
         df_meta,
         skip_first_and_last=skip_first_last_img,
+        apply_chip_correction=args["--chipcorrection"],
     )
     print("corrected image summary")
     print(f"\tdimension:\t{img_corrected.shape}")

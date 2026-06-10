@@ -171,13 +171,50 @@ def calc_pixel_occupancy_probability(
     return _pops
 
 
+def _apply_chip_geometry_correction(images: np.ndarray) -> np.ndarray:
+    """Apply Timepix chip-geometry correction to a corrected stack.
+
+    Sub-pixel shift correction plus inter-chip gap interpolation, delegated
+    to the optional ``timepix-geometry-correction`` package. This is the
+    proper home of the feature originally added in 51e93bd (issue #9) and
+    turned off in 9d15860 (issue #13): available, documented, and gated off
+    by default instead of commented out.
+    """
+    try:
+        from timepix_geometry_correction.correct import TimepixGeometryCorrection
+    except ImportError as error:
+        raise ImportError(
+            "Chip-geometry correction requires the optional "
+            "'timepix-geometry-correction' package. Install it with "
+            "pip install 'NeutronImaging[chipcorrection]' "
+            "(or pip install timepix-geometry-correction)."
+        ) from error
+
+    corrector = TimepixGeometryCorrection(raw_images=images)
+    return corrector.correct(display=False)
+
+
 def correct_images(
     images: np.ndarray,
     metadata: pd.DataFrame,
     skip_first_and_last=False,
+    apply_chip_correction=False,
 ) -> np.ndarray:
     """
     Correct raw images based on shutter info in metadata
+
+    Parameters
+    ----------
+    images : ndarray
+        Raw frame stack (n_frames, height, width).
+    metadata : DataFrame
+        Merged shutter/spectra metadata (see merge_meta_data).
+    skip_first_and_last : bool, optional
+        Drop the first and last frame of each shutter group. Default False.
+    apply_chip_correction : bool, optional
+        Additionally apply Timepix chip-geometry correction (sub-pixel
+        shift + inter-chip gap interpolation). Off by default; requires the
+        optional timepix-geometry-correction package. Default False.
     """
     _img = np.asarray(images)
     _pop = calc_pixel_occupancy_probability(images, metadata)
@@ -193,5 +230,8 @@ def correct_images(
             _tmp += list(_run_num[1:-1])
         _idx_to_keep = np.array(_tmp)
         _rst = _rst[_idx_to_keep, :, :]
+
+    if apply_chip_correction:
+        _rst = _apply_chip_geometry_correction(_rst)
 
     return _rst
