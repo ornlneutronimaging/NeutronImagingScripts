@@ -30,12 +30,18 @@ THIS_DIR = os.path.abspath(os.path.dirname(__file__))
 def read_requirements_from_file(filepath):
     '''Read a list of requirements from the given file and split into a
     list of strings. It is assumed that the file is a flat
-    list with one requirement per line.
+    list with one requirement per line; comments and blank lines are
+    ignored.
     :param filepath: Path to the file to read
     :return: A list of strings containing the requirements
     '''
-    with open(filepath, 'rU') as req_file:
-        return req_file.readlines()
+    with open(filepath) as req_file:
+        requirements = []
+        for line in req_file:
+            requirement = line.split('#', 1)[0].strip()
+            if requirement:
+                requirements.append(requirement)
+        return requirements
 
 
 def read(*parts):
