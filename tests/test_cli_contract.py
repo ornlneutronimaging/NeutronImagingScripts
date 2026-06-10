@@ -90,8 +90,11 @@ class TestMcpDetectorCorrectionCli:
         assert len(tiffs) == ds["n_groups"] * (ds["frames_per_group"] - 2)
         assert (ds["output_dir"] / f"{ds['prefix']}_Spectra.txt").exists()
 
-    def test_skipimg_exports_true_source_names(self, synthetic_mcp_dataset, script_path):
-        """Kept frames must be written under their true source stems."""
+    def test_skipimg_exports_true_source_names_and_content(self, synthetic_mcp_dataset, script_path):
+        """Kept frames must be written under their true source stems, AND
+        each file must contain the corrected frame belonging to that source
+        — name-set equality alone would not catch frames written under the
+        right names in the wrong order."""
         ds = synthetic_mcp_dataset
         result = _run_cli(
             script_path("mcp_detector_correction.py"), "--skipimg", ds["input_dir"], ds["output_dir"]
@@ -106,6 +109,18 @@ class TestMcpDetectorCorrectionCli:
         expected_names = {f"{ds['prefix']}_{k:05d}.tif" for k in kept}
         actual_names = {t.name for t in ds["output_dir"].glob("*.tif")}
         assert actual_names == expected_names
+
+        # content mapping: row r of the skip-corrected stack belongs to
+        # kept source frame kept[r]
+        expected = _expected_corrected(ds["input_dir"], skip=True).astype(np.float32)
+        assert expected.shape[0] == len(kept)
+        for row, k in enumerate(kept):
+            on_disk = _read_tiff(ds["output_dir"] / f"{ds['prefix']}_{k:05d}.tif")
+            np.testing.assert_array_equal(
+                on_disk,
+                expected[row],
+                err_msg=f"frame written under source name {k:05d} does not match its corrected data",
+            )
 
     def test_skip_selector_consistency(self, synthetic_mcp_dataset):
         """correct_images inlines its own skip logic; pin that it selects the

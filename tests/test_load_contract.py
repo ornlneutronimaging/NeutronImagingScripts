@@ -118,6 +118,20 @@ class TestLoadSemantics:
         assert loaded.shape[0] == 4
         np.testing.assert_array_equal(loaded, np.full((4, 16, 16), 1, dtype=np.float32))
 
+    def test_empty_directory_raises(self, tmp_path):
+        """assert loading from a directory without frames fails fast
+        instead of returning a degenerate empty array"""
+        with pytest.raises(OSError, match="No FITS frame files"):
+            load_images(str(tmp_path))
+
+    def test_zero_duplicated_runs_raises(self, tmp_path):
+        """assert nbr_of_duplicated_runs < 1 is rejected up front
+        (previously a bare ZeroDivisionError)"""
+        from neutronimaging.detector_correction import list_image_files
+
+        with pytest.raises(ValueError, match="nbr_of_duplicated_runs"):
+            list_image_files(str(tmp_path), nbr_of_duplicated_runs=0)
+
     def test_progress_bar_headless(self, tmp_path):
         """Loading must work headless: the progress bar is tqdm.auto,
         which renders a widget in Jupyter and a console bar elsewhere

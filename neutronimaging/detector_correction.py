@@ -68,13 +68,16 @@ def skipping_meta_data(meta: pd.DataFrame) -> pd.DataFrame:
     return pd.concat(_with_skips)
 
 
-def list_image_files(raw_image_dir: str, nbr_of_duplicated_runs: int = 1) -> list:
+def list_image_files(raw_image_dir: str, nbr_of_duplicated_runs: int = 1) -> list[str]:
     """Sorted FITS frame files in a directory, excluding *_SummedImg*.
 
     if the nbr_of_duplicated_runs is higher than 1 (default value) that means the MCP produced by
     mistake other sets of the same data, those must be removed and not used in the reconstruction
     """
     import glob
+
+    if nbr_of_duplicated_runs < 1:
+        raise ValueError(f"nbr_of_duplicated_runs must be >= 1, got {nbr_of_duplicated_runs}")
 
     _img_names = [
         me for me in glob.glob(f"{raw_image_dir}/*.fits") if "_SummedImg" not in me
@@ -121,20 +124,34 @@ def load_images(raw_image_dir: str, nbr_of_duplicated_runs: int = 1) -> np.ndarr
     Frames are read with astropy in sorted-filename order (excluding
     *_SummedImg*), squeezed to 2D, gamma-filtered (integer data only, see
     _auto_gamma_filter) and cast to float32. Returns an ndarray of shape
-    (n_frames, height, width).
+    (n_frames, height, width). The stack is preallocated and filled one
+    frame at a time, so peak memory is one stack plus one frame.
+
+    Raises
+    ------
+    OSError
+        If the directory contains no frame files, or a frame's shape does
+        not match the previously loaded frames.
     """
     _img_names = list_image_files(raw_image_dir, nbr_of_duplicated_runs)
+    if not _img_names:
+        raise OSError(f"No FITS frame files found in {raw_image_dir}")
 
-    frames = []
-    for _name in tqdm(_img_names, desc="Loading sample", leave=False):
-        with fits.open(_name, ignore_missing_end=True) as hdulist:
+    stack = None
+    for _i, _name in enumerate(tqdm(_img_names, desc="Loading sample", leave=False)):
+        # memmap=False: fully materialize while the file is open, so the
+        # array never references a closed file mapping
+        with fits.open(_name, ignore_missing_end=True, memmap=False) as hdulist:
             raw = hdulist[0].data
-        _image = np.squeeze(np.asarray(raw, dtype=np.float32))
-        _image = _auto_gamma_filter(_image, raw.dtype)
-        if frames and _image.shape != frames[0].shape:
+            _image = np.squeeze(np.asarray(raw, dtype=np.float32))
+            raw_dtype = raw.dtype
+        _image = _auto_gamma_filter(_image, raw_dtype)
+        if stack is None:
+            stack = np.empty((len(_img_names), *_image.shape), dtype=np.float32)
+        elif _image.shape != stack.shape[1:]:
             raise OSError("Shape of sample does not match previously loaded data set!")
-        frames.append(_image)
-    return np.array(frames, dtype=np.float32)
+        stack[_i] = _image
+    return stack
 
 
 def calc_pixel_occupancy_probability(
