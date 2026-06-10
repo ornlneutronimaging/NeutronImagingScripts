@@ -1,5 +1,6 @@
 # Runtime dependencies for neutronimaging
 
+astropy  # FITS reading in the contract tests; explicit rather than transitive via NeuNorm
 docopt
 h5py  # used by NeuNorm 1.x loader but not declared as its dependency
 ipympl
