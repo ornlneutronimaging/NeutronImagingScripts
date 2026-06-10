@@ -5,11 +5,9 @@
 """
 
 import numpy as np
-from typing import Type
-from numpy.core.fromnumeric import sort
 import pandas as pd
-from NeuNorm.normalization import Normalization
-from timepix_geometry_correction.correct import TimepixGeometryCorrection
+from astropy.io import fits
+from tqdm.auto import tqdm
 
 
 def read_shutter_count(filename: str) -> pd.DataFrame:
@@ -70,36 +68,81 @@ def skipping_meta_data(meta: pd.DataFrame) -> pd.DataFrame:
     return pd.concat(_with_skips)
 
 
-def load_images(raw_imamge_dir: str, nbr_of_duplicated_runs: int = 1) -> Type[Normalization]:
-    """Loading all Images into memory
+def list_image_files(raw_image_dir: str, nbr_of_duplicated_runs: int = 1) -> list:
+    """Sorted FITS frame files in a directory, excluding *_SummedImg*.
 
     if the nbr_of_duplicated_runs is higher than 1 (default value) that means the MCP produced by
     mistake other sets of the same data, those must be removed and not used in the reconstruction
     """
     import glob
-    from neutronimaging.util import in_jupyter
 
-    o_norm = Normalization()
-
-    # gather all image
     _img_names = [
-        me for me in glob.glob(f"{raw_imamge_dir}/*.fits") if "_SummedImg" not in me
+        me for me in glob.glob(f"{raw_image_dir}/*.fits") if "_SummedImg" not in me
     ]
     _img_names.sort()
 
     final_index = int(len(_img_names) / nbr_of_duplicated_runs)
-    _img_names = _img_names[0: final_index]
+    return _img_names[0:final_index]
 
-    o_norm.load(file=_img_names, notebook=in_jupyter())
-    return o_norm
+
+def _auto_gamma_filter(image: np.ndarray, raw_dtype) -> np.ndarray:
+    """Replicate NeuNorm 1.x's automatic gamma filtering.
+
+    For integer raw data, pixels strictly above ``iinfo(raw_dtype).max - 5``
+    are treated as gamma hits and replaced by the mean of their 8 neighbors
+    (zero-padded at the borders), computed on the unfiltered image — the
+    exact semantics of NeuNorm 1.x's ``_auto_gamma_filtering`` (3x3 ones
+    kernel with zero center, ``convolve(..., mode="constant")``).
+    Float raw data is returned unchanged, as in 1.x.
+
+    ``image`` must already be the float32 working copy.
+    """
+    if not np.issubdtype(np.dtype(raw_dtype), np.integer):
+        return image
+    threshold = np.iinfo(raw_dtype).max - 5
+    gamma = image > threshold
+    if not gamma.any():
+        return image
+
+    padded = np.pad(image, 1, mode="constant", constant_values=0.0)
+    neighbor_mean = (
+        padded[:-2, :-2] + padded[:-2, 1:-1] + padded[:-2, 2:]
+        + padded[1:-1, :-2] + padded[1:-1, 2:]
+        + padded[2:, :-2] + padded[2:, 1:-1] + padded[2:, 2:]
+    ) / 8.0
+    filtered = image.copy()
+    filtered[gamma] = neighbor_mean[gamma]
+    return filtered
+
+
+def load_images(raw_image_dir: str, nbr_of_duplicated_runs: int = 1) -> np.ndarray:
+    """Load all frame images into memory as a float32 stack.
+
+    Frames are read with astropy in sorted-filename order (excluding
+    *_SummedImg*), squeezed to 2D, gamma-filtered (integer data only, see
+    _auto_gamma_filter) and cast to float32. Returns an ndarray of shape
+    (n_frames, height, width).
+    """
+    _img_names = list_image_files(raw_image_dir, nbr_of_duplicated_runs)
+
+    frames = []
+    for _name in tqdm(_img_names, desc="Loading sample", leave=False):
+        with fits.open(_name, ignore_missing_end=True) as hdulist:
+            raw = hdulist[0].data
+        _image = np.squeeze(np.asarray(raw, dtype=np.float32))
+        _image = _auto_gamma_filter(_image, raw.dtype)
+        if frames and _image.shape != frames[0].shape:
+            raise OSError("Shape of sample does not match previously loaded data set!")
+        frames.append(_image)
+    return np.array(frames, dtype=np.float32)
 
 
 def calc_pixel_occupancy_probability(
-    o_norm: Type[Normalization],
+    images: np.ndarray,
     metadata: pd.DataFrame,
 ) -> np.ndarray:
     """calculate pixel occupancy probability"""
-    _imgs = np.array(o_norm.data["sample"]["data"])
+    _imgs = np.asarray(images)
     _pops = np.zeros_like(_imgs)
 
     # calculation is done on a per shutter index base
@@ -112,15 +155,15 @@ def calc_pixel_occupancy_probability(
 
 
 def correct_images(
-    o_norm: Type[Normalization],
+    images: np.ndarray,
     metadata: pd.DataFrame,
     skip_first_and_last=False,
 ) -> np.ndarray:
     """
     Correct raw images based on shutter info in metadata
     """
-    _img = np.array(o_norm.data["sample"]["data"])
-    _pop = calc_pixel_occupancy_probability(o_norm, metadata)
+    _img = np.asarray(images)
+    _pop = calc_pixel_occupancy_probability(images, metadata)
     _snr = metadata["shutter_n_ratio"].values[:, np.newaxis, np.newaxis]
     _rst = _img / (1 - _pop) / _snr
     # NOTE: The very first and last image of each frame (shutter_index)
@@ -133,44 +176,5 @@ def correct_images(
             _tmp += list(_run_num[1:-1])
         _idx_to_keep = np.array(_tmp)
         _rst = _rst[_idx_to_keep, :, :]
-    
-    # correct chips alignment
-    #print(f"Performing chips geometry correction")
-    #o_corrector = TimepixGeometryCorrection(raw_images=_rst)
-    #_rst = o_corrector.correct(display=False)
-    
+
     return _rst
-
-
-if __name__ == "__main__":
-    import os
-
-    _file_root = os.path.dirname(os.path.abspath(__file__))
-    test_data_dir = os.path.join(_file_root, "../../../../NeutronImagingScripts/data")
-    #
-    shutter_counts_file = os.path.join(test_data_dir, "OB_1_005_ShutterCount.txt")
-    df_shutter_count = read_shutter_count(shutter_counts_file)
-    print(df_shutter_count)
-    #
-    shutter_time_file = os.path.join(test_data_dir, "OB_1_005_ShutterTimes.txt")
-    df_shutter_time = read_shutter_time(shutter_time_file)
-    print(df_shutter_time)
-    #
-    spectra_file = os.path.join(test_data_dir, "OB_1_005_Spectra.txt")
-    df_spectra = read_spectra(spectra_file)
-    print(df_spectra)
-    #
-    df_meta = merge_meta_data(df_shutter_count, df_shutter_time, df_spectra)
-    print(df_meta)
-
-    # test load images
-    img_dir = test_data_dir
-    o_norm = load_images(img_dir)
-    print(type(o_norm))
-
-    # test calculate pixel occupancy probability
-    pop = calc_pixel_occupancy_probability(o_norm, df_meta)
-
-    # test image correction
-    imgs = correct_images(o_norm, df_meta)
-    

@@ -90,13 +90,6 @@ class TestMcpDetectorCorrectionCli:
         assert len(tiffs) == ds["n_groups"] * (ds["frames_per_group"] - 2)
         assert (ds["output_dir"] / f"{ds['prefix']}_Spectra.txt").exists()
 
-    @pytest.mark.xfail(
-        strict=True,
-        reason="NeuNorm 1.x export zip-truncates the full filename list against the "
-        "skip-reduced stack, mislabeling kept frames with the first N source names; "
-        "the loader-replacement PR fixes this to use the true kept source names "
-        "(remove this marker there).",
-    )
     def test_skipimg_exports_true_source_names(self, synthetic_mcp_dataset, script_path):
         """Kept frames must be written under their true source stems."""
         ds = synthetic_mcp_dataset

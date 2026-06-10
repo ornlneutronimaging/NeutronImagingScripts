@@ -22,8 +22,8 @@ def _write_fits_int16(path, image: np.ndarray) -> None:
     fits.HDUList([hdu]).writeto(str(path))
 
 
-def _stack(o_norm) -> np.ndarray:
-    return np.array(o_norm.data["sample"]["data"])
+def _stack(images) -> np.ndarray:
+    return np.asarray(images)
 
 
 def _astropy_read_float32(path) -> np.ndarray:
@@ -36,13 +36,10 @@ class TestShippedDataContract:
 
     @pytest.fixture(scope="class")
     def frames(self, data_dir):
-        """Per-frame view of the shipped stack.
-
-        Deliberately NOT stacked into one contiguous array: these
-        assertions only need per-frame access, and stacking would
-        duplicate ~1 GB alongside the loader's own copy in CI.
-        """
-        return load_images(str(data_dir)).data["sample"]["data"]
+        """The shipped stack; load_images() now returns the float32
+        ndarray directly, so iterating/indexing it yields per-frame views
+        with no additional copy."""
+        return load_images(str(data_dir))
 
     def test_shape_and_dtype(self, frames):
         assert len(frames) == 916
@@ -121,15 +118,66 @@ class TestLoadSemantics:
         assert loaded.shape[0] == 4
         np.testing.assert_array_equal(loaded, np.full((4, 16, 16), 1, dtype=np.float32))
 
-    @pytest.mark.parametrize("jupyter", [False, True])
-    def test_in_jupyter_both_paths(self, tmp_path, monkeypatch, jupyter):
-        """load_images consults in_jupyter() for its progress bar; both
-        branches must load identically (a loader rewrite could silently
-        drop the plumbing)."""
-        import neutronimaging.util
-
-        monkeypatch.setattr(neutronimaging.util, "in_jupyter", lambda: jupyter)
+    def test_progress_bar_headless(self, tmp_path):
+        """Loading must work headless: the progress bar is tqdm.auto,
+        which renders a widget in Jupyter and a console bar elsewhere
+        (this replaced the in_jupyter()/NeuNorm notebook= plumbing)."""
         _write_fits_int16(tmp_path / "x_00000.fits", np.full((16, 16), 7, dtype=np.int16))
 
         loaded = _stack(load_images(str(tmp_path)))
         np.testing.assert_array_equal(loaded[0], np.full((16, 16), 7, dtype=np.float32))
+
+
+class TestAutoGammaFilter:
+    """Pin exact NeuNorm 1.x gamma-filter parity (maintainer decision:
+    replicate, not drop). Every expected value below was verified against
+    NeuNorm 1.6.12 itself before the removal: pixels strictly above
+    iinfo(dtype).max - 5 are replaced by the mean of their 8 neighbors,
+    zero-padded at borders, computed on the unfiltered image; float data
+    passes through untouched."""
+
+    def _load_single(self, tmp_path, image: np.ndarray) -> np.ndarray:
+        _write_fits_int16(tmp_path / "g_00000.fits", image)
+        return _stack(load_images(str(tmp_path)))[0]
+
+    def test_interior_saturated_pixel_neighbor_mean(self, tmp_path):
+        image = np.full((5, 5), 8, dtype=np.int16)
+        image[2, 2] = 32767
+        image[1, 1], image[1, 2], image[1, 3] = 10, 20, 30
+        loaded = self._load_single(tmp_path, image)
+        assert loaded[2, 2] == (10 + 20 + 30 + 8 * 5) / 8.0  # = 12.5, verified vs 1.x
+        assert loaded[1, 1] == 10.0  # neighbors untouched
+
+    def test_corner_saturated_pixel_zero_padding(self, tmp_path):
+        image = np.full((5, 5), 8, dtype=np.int16)
+        image[0, 0] = 32767
+        loaded = self._load_single(tmp_path, image)
+        assert loaded[0, 0] == 3.0  # (3 real neighbors x 8) / 8, verified vs 1.x
+
+    def test_adjacent_saturated_use_unfiltered_neighbors(self, tmp_path):
+        image = np.full((5, 5), 8, dtype=np.int16)
+        image[2, 2] = image[2, 3] = 32767
+        loaded = self._load_single(tmp_path, image)
+        expected = (8 * 7 + 32767) / 8.0  # = 4102.875, verified vs 1.x
+        assert loaded[2, 2] == expected
+        assert loaded[2, 3] == expected
+
+    def test_threshold_is_strict(self, tmp_path):
+        image = np.full((5, 5), 8, dtype=np.int16)
+        image[2, 2] = 32762  # == iinfo(int16).max - 5: NOT above threshold
+        loaded = self._load_single(tmp_path, image)
+        assert loaded[2, 2] == 32762.0
+
+        image[2, 2] = 32763  # strictly above: replaced
+        for old in tmp_path.glob("*.fits"):
+            old.unlink()
+        loaded = self._load_single(tmp_path, image)
+        assert loaded[2, 2] == 8.0
+
+    def test_float_fits_passes_through_unfiltered(self, tmp_path):
+        image = np.full((5, 5), 1.0e30, dtype=np.float64)
+        hdu = fits.PrimaryHDU(image)
+        fits.HDUList([hdu]).writeto(str(tmp_path / "f_00000.fits"))
+        loaded = _stack(load_images(str(tmp_path)))[0]
+        assert loaded.dtype == np.float32
+        np.testing.assert_array_equal(loaded, image.astype(np.float32))
