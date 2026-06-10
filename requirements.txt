@@ -1,6 +1,7 @@
 # Runtime dependencies for neutronimaging
 
 docopt
+h5py  # used by NeuNorm 1.x loader but not declared as its dependency
 ipympl
 matplotlib
 numpy
