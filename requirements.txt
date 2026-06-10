@@ -7,4 +7,5 @@ matplotlib
 numpy
 NeuNorm<2  # 2.0 is a breaking rewrite; detector_correction.py uses the 1.x API
 pandas
+timepix-geometry-correction>=0.2.0.dev7  # explicit dev spec: only pre-releases published so far
 tqdm
