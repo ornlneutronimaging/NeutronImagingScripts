@@ -35,26 +35,33 @@ class TestShippedDataContract:
     """Pin the load contract on the full shipped 916-frame OB stack."""
 
     @pytest.fixture(scope="class")
-    def full_stack(self, data_dir):
-        return _stack(load_images(str(data_dir)))
+    def frames(self, data_dir):
+        """Per-frame view of the shipped stack.
 
-    def test_shape_and_dtype(self, full_stack):
-        assert full_stack.shape == (916, 512, 512)
-        assert full_stack.dtype == np.float32
+        Deliberately NOT stacked into one contiguous array: these
+        assertions only need per-frame access, and stacking would
+        duplicate ~1 GB alongside the loader's own copy in CI.
+        """
+        return load_images(str(data_dir)).data["sample"]["data"]
 
-    def test_sampled_pixel_goldens(self, full_stack):
+    def test_shape_and_dtype(self, frames):
+        assert len(frames) == 916
+        assert all(frame.shape == (512, 512) for frame in frames)
+        assert {frame.dtype for frame in frames} == {np.dtype(np.float32)}
+
+    def test_sampled_pixel_goldens(self, frames):
         """Spot values at off-center coordinates fail loudly on any spatial
         transform, unlike the mean-profile regressions."""
-        assert full_stack[100][37, 411] == 69.0
-        assert full_stack[100][250, 17] == 194.0
-        assert full_stack[500][37, 411] == 55.0
-        assert full_stack[500][250, 17] == 138.0
-        assert full_stack[915][37, 411] == 43.0
-        assert full_stack[915][250, 17] == 84.0
+        assert frames[100][37, 411] == 69.0
+        assert frames[100][250, 17] == 194.0
+        assert frames[500][37, 411] == 55.0
+        assert frames[500][250, 17] == 138.0
+        assert frames[915][37, 411] == 43.0
+        assert frames[915][250, 17] == 84.0
 
-    def test_frame0_total_counts(self, full_stack):
+    def test_frame0_total_counts(self, frames):
         """Frame 0's pixel sum equals the first Spectra counts entry."""
-        assert float(full_stack[0].sum()) == 162259.0
+        assert float(frames[0].sum()) == 162259.0
 
 
 class TestLoadSemantics:
