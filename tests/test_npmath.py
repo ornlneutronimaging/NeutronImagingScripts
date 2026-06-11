@@ -2,7 +2,7 @@
 
 """
 Unit testing for numpy math module from package
-NetronImaging
+NeutronImaging
 """
 
 import numpy as np

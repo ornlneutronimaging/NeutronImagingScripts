@@ -112,6 +112,9 @@ neutronimaging = { path = ".", editable = true }
 
 [tool.pixi.environments]
 default = { features = ["test", "developer"], solve-group = "default" }
+# re-executing the example notebooks (repo convention: committed notebooks
+# carry executed outputs; refresh by re-running, never by clearing)
+jupyter = { features = ["test", "jupyter"], solve-group = "jupyter" }
 # per-version test environments: the CI matrix tests real interpreter
 # versions (SPEC 0 window)
 py312 = { features = ["test", "py312"], solve-group = "py312" }
@@ -130,6 +133,12 @@ python = "3.14.*"
 [tool.pixi.feature.test.dependencies]
 pytest = ">=9.0.3" # CVE-2025-71176 fixed in 9.0.3
 pytest-cov = "*"
+
+[tool.pixi.feature.jupyter.dependencies]
+nbconvert = "*"
+ipykernel = "*"
+matplotlib = "*"
+ipywidgets = "*"
 
 [tool.pixi.feature.developer.dependencies]
 pip = ">=26.0"     # CVE-2026-1703
