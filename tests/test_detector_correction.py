@@ -2,7 +2,7 @@
 
 """
 Unit testing for detector correction module from package
-NetronImaging
+NeutronImaging
 """
 
 import os
