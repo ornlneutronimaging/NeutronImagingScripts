@@ -4,8 +4,8 @@
 
 """
 This module contains necessary preprocessing toolkits for neutron imaging, including
-- CG1D: reactor imaging beamline
--
+- CG1D (reactor imaging beamline): TIFF metadata extraction and measurement
+  configuration generation
 """
 
 import itertools

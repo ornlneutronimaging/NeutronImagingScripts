@@ -1,7 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-""" """
+"""MCP detector occupancy correction for VENUS neutron imaging data.
+
+Loads MCP FITS frame stacks with their shutter metadata sidecars, applies
+the per-shutter-window occupancy (deadtime) correction, and supports the
+optional Timepix chip-geometry correction.
+"""
 
 import numpy as np
 import pandas as pd

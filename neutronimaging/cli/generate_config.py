@@ -4,9 +4,9 @@
 """Configuration Generator
 
 Usage:
-    generate_config.py  <image_dir> <openbeam_dir> <darkfield_dir> <output_file> [--tolerance=<tor>]
-    generate_config.py  (-h | --help)
-    generate_config.py  --version
+    generate_config  <image_dir> <openbeam_dir> <darkfield_dir> <output_file> [--tolerance=<tor>]
+    generate_config  (-h | --help)
+    generate_config  --version
 
 Options:
     -h --help           print this message
