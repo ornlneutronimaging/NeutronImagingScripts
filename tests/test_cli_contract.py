@@ -81,9 +81,7 @@ class TestMcpDetectorCorrectionCli:
     def test_skipimg_frame_count_and_spectra_emitted(self, synthetic_mcp_dataset, script_path):
         """--skipimg drops the first and last frame of each shutter group."""
         ds = synthetic_mcp_dataset
-        result = _run_cli(
-            script_path("mcp_detector_correction.py"), "--skipimg", ds["input_dir"], ds["output_dir"]
-        )
+        result = _run_cli(script_path("mcp_detector_correction.py"), "--skipimg", ds["input_dir"], ds["output_dir"])
         assert result.returncode == 0, result.stderr
 
         tiffs = sorted(ds["output_dir"].glob("*.tif"))
@@ -96,15 +94,11 @@ class TestMcpDetectorCorrectionCli:
         — name-set equality alone would not catch frames written under the
         right names in the wrong order."""
         ds = synthetic_mcp_dataset
-        result = _run_cli(
-            script_path("mcp_detector_correction.py"), "--skipimg", ds["input_dir"], ds["output_dir"]
-        )
+        result = _run_cli(script_path("mcp_detector_correction.py"), "--skipimg", ds["input_dir"], ds["output_dir"])
         assert result.returncode == 0, result.stderr
 
         kept = [
-            g * ds["frames_per_group"] + i
-            for g in range(ds["n_groups"])
-            for i in range(1, ds["frames_per_group"] - 1)
+            g * ds["frames_per_group"] + i for g in range(ds["n_groups"]) for i in range(1, ds["frames_per_group"] - 1)
         ]
         expected_names = {f"{ds['prefix']}_{k:05d}.tif" for k in kept}
         actual_names = {t.name for t in ds["output_dir"].glob("*.tif")}

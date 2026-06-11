@@ -1,8 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-"""
-"""
+""" """
 
 import numpy as np
 import pandas as pd
@@ -96,7 +95,7 @@ def merge_meta_data(
 
 def skipping_meta_data(meta: pd.DataFrame) -> pd.DataFrame:
     """Skips first and last or each run in metadata"""
-    _by_shutter = meta.groupby(['shutter_index'])
+    _by_shutter = meta.groupby(["shutter_index"])
     # groupby returns (group_num, dataframe), thus the [1] first
     _with_skips = [item[1][1:-1] for item in _by_shutter]
     return pd.concat(_with_skips)
@@ -113,9 +112,7 @@ def list_image_files(raw_image_dir: str, nbr_of_duplicated_runs: int = 1) -> lis
     if nbr_of_duplicated_runs < 1:
         raise ValueError(f"nbr_of_duplicated_runs must be >= 1, got {nbr_of_duplicated_runs}")
 
-    _img_names = [
-        me for me in glob.glob(f"{raw_image_dir}/*.fits") if "_SummedImg" not in me
-    ]
+    _img_names = [me for me in glob.glob(f"{raw_image_dir}/*.fits") if "_SummedImg" not in me]
     _img_names.sort()
 
     final_index = int(len(_img_names) / nbr_of_duplicated_runs)
@@ -143,9 +140,14 @@ def _auto_gamma_filter(image: np.ndarray, raw_dtype) -> np.ndarray:
 
     padded = np.pad(image, 1, mode="constant", constant_values=0.0)
     neighbor_mean = (
-        padded[:-2, :-2] + padded[:-2, 1:-1] + padded[:-2, 2:]
-        + padded[1:-1, :-2] + padded[1:-1, 2:]
-        + padded[2:, :-2] + padded[2:, 1:-1] + padded[2:, 2:]
+        padded[:-2, :-2]
+        + padded[:-2, 1:-1]
+        + padded[:-2, 2:]
+        + padded[1:-1, :-2]
+        + padded[1:-1, 2:]
+        + padded[2:, :-2]
+        + padded[2:, 1:-1]
+        + padded[2:, 2:]
     ) / 8.0
     filtered = image.copy()
     filtered[gamma] = neighbor_mean[gamma]
