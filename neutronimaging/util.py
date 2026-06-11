@@ -16,7 +16,10 @@ def in_jupyter() -> bool:
 
         kernel_name = get_ipython().__class__.__name__
         state = True if "ZMQ" in kernel_name else False
-    except NameError:
+    except ImportError:
+        # no IPython installed at all (headless deployment); the previous
+        # `except NameError` never matched — a missing module raises
+        # ModuleNotFoundError, a subclass of ImportError
         state = False
     return state
 

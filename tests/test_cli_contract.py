@@ -207,17 +207,7 @@ class TestMcpDetectorCorrectionCli:
         np.testing.assert_array_equal(skipped, full[kept_run_nums])
 
 
-GENERATE_CONFIG_XFAIL = pytest.mark.xfail(
-    strict=True,
-    reason="generate_config_CG1D's output= path json.dumps numpy int64 scalars and "
-    "crashes (TypeError: Object of type int64 is not JSON serializable), so the CLI "
-    "is broken end-to-end on modern numpy/pandas; the existing test_preprocess smoke "
-    "never exercises output=. Fix lands in the correctness PR (remove this marker there).",
-)
-
-
 class TestGenerateConfigCli:
-    @GENERATE_CONFIG_XFAIL
     def test_single_image_dir(self, data_dir, tmp_path, script_path):
         out = tmp_path / "config.json"
         result = _run_cli(
@@ -231,7 +221,6 @@ class TestGenerateConfigCli:
         assert out.exists()
         json.loads(out.read_text())  # valid JSON
 
-    @GENERATE_CONFIG_XFAIL
     def test_comma_separated_image_dirs_and_tolerance(self, data_dir, tmp_path, script_path):
         out = tmp_path / "config.json"
         imgdirs = ",".join(
