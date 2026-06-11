@@ -46,26 +46,33 @@ if __name__ == "__main__":
     skip_first_last_img = args["--skipimg"]
     verbose = args["--verbose"]
 
+    # validation
+    print("Validating input arguments")
+    if not Path(input_dir).is_dir():
+        raise FileNotFoundError(f"Input directory does not exist: {input_dir}")
+    if not Path(output_dir).is_dir():
+        raise FileNotFoundError(f"Output directory does not exist: {output_dir}")
+
     # in some rare instances, the MCP creates a duplicate set of the run in the same folder
     # we need to only consider the first set in the autoreduction
-    shutter_count_files = glob.glob(input_dir + "/*_ShutterCount.txt")
+    shutter_count_files = sorted(glob.glob(input_dir + "/*_ShutterCount.txt"))
+    if not shutter_count_files:
+        raise FileNotFoundError(f"No *_ShutterCount.txt file found in {input_dir}")
     nbr_of_duplicated_runs = len(shutter_count_files)
     if nbr_of_duplicated_runs > 1:
         print(f"The folder contains {nbr_of_duplicated_runs} sets of the same data!")
 
-    shutter_count_file = glob.glob(input_dir + "/*_ShutterCount.txt")[0]
-    shutter_time_file = glob.glob(input_dir + "/*_ShutterTimes.txt")[0]
-    spectra_file = glob.glob(input_dir + "/*_Spectra.txt")[0]
-    summed_file = glob.glob(input_dir + "/*_SummedImg.fits")[0]
-
-    # validation
-    print("Validating input arguments")
-    assert Path(input_dir).exists()
-    assert Path(output_dir).exists()
-    assert Path(shutter_count_file).exists()
-    assert Path(shutter_time_file).exists()
-    assert Path(spectra_file).exists()
-    assert Path(summed_file).exists()
+    # derive every sidecar file from one common prefix (the first set in
+    # sorted order); four independent unsorted globs could mix files from
+    # different duplicate sets
+    shutter_count_file = shutter_count_files[0]
+    _stem = Path(shutter_count_file).name[: -len("_ShutterCount.txt")]
+    shutter_time_file = os.path.join(input_dir, f"{_stem}_ShutterTimes.txt")
+    spectra_file = os.path.join(input_dir, f"{_stem}_Spectra.txt")
+    summed_file = os.path.join(input_dir, f"{_stem}_SummedImg.fits")
+    for _sidecar in (shutter_time_file, spectra_file, summed_file):
+        if not Path(_sidecar).exists():
+            raise FileNotFoundError(f"Expected sidecar file is missing: {_sidecar}")
 
     # process metadata
     print("Processing metadata")
@@ -80,6 +87,11 @@ if __name__ == "__main__":
     # load images
     print("Loading images into memory")
     images = load_images(input_dir, nbr_of_duplicated_runs)
+    if images.shape[0] != len(df_meta):
+        raise RuntimeError(
+            f"loaded {images.shape[0]} frames but the spectra metadata has "
+            f"{len(df_meta)} rows; the input directory is inconsistent"
+        )
 
     # perform image correction
     print("Perform correction")
@@ -123,11 +135,17 @@ if __name__ == "__main__":
     shutil.copyfile(summed_file, out_summed_file)
     # handle proper spectra parsing
     if skip_first_last_img:
+        # match the instrument-written format: headerless TSV with CRLF
+        # line endings, so read_spectra and the non-skip (verbatim copy)
+        # branch stay parseable the same way; pandas defaults previously
+        # wrote comma-separated WITH header under the same filename
         skipping_meta_data(df_meta).to_csv(
             out_spectra_file,
-            columns=['shutter_time', 'counts'],
+            columns=["shutter_time", "counts"],
             index=False,
-            index_label=False
+            header=False,
+            sep="\t",
+            lineterminator="\r\n",
         )
     else:
         shutil.copyfile(spectra_file, out_spectra_file)

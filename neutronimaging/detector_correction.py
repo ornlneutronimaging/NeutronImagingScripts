@@ -9,6 +9,10 @@ import pandas as pd
 from astropy.io import fits
 from tqdm.auto import tqdm
 
+# smallest (1 - occupancy) the correction will divide by; below this the
+# denominator is numerically indistinguishable from the pole at occupancy 1
+_OCCUPANCY_EPS = float(np.finfo(np.float32).eps)
+
 
 def read_shutter_count(filename: str) -> pd.DataFrame:
     """Parse in shutter count data from csv"""
@@ -44,19 +48,49 @@ def merge_meta_data(
     shutter_time: pd.DataFrame,
     spectra: pd.DataFrame,
 ) -> pd.DataFrame:
-    """Consolidate meta data from three different dataframes into one"""
+    """Consolidate meta data from three different dataframes into one
+
+    Raises
+    ------
+    ValueError
+        If the ShutterCount and ShutterTimes files disagree on which
+        shutter windows exist (after their respective >0 filters), or if
+        any spectra row falls outside every shutter window — both cases
+        would otherwise flow downstream as NaN/negative-occupancy frames.
+    """
+    # the two sidecar files describe the same shutter windows; align them
+    # explicitly by shutter_index instead of positionally (a positional
+    # concat NaN-fills on length mismatch, and a window filtered from only
+    # one file silently shifts every row after it)
+    _df_shutter = pd.merge(shutter_count, shutter_time, on="shutter_index", how="outer", indicator=True)
+    if (_df_shutter["_merge"] != "both").any():
+        _bad = _df_shutter.loc[_df_shutter["_merge"] != "both", "shutter_index"].astype(int).tolist()
+        raise ValueError(
+            f"ShutterCount and ShutterTimes disagree: shutter window(s) {_bad} "
+            "exist in only one of the two files (after dropping zero-count / "
+            "zero-end-frame rows)"
+        )
+    _df_shutter = _df_shutter.drop(columns="_merge")
+
     _df = spectra.copy(deep=True)
-    _df_shutter = pd.concat([shutter_count, shutter_time], axis=1)
-    print(f"{_df_shutter =}")
     _df["run_num"] = spectra.index
     # initialize fields
     _df["shutter_index"] = -1
     _df["shutter_counts"] = -1
-    for _, row in _df_shutter.iterrows():
-        _idx, _cnt, _snr, _, _start, _end = row
-        _df.loc[_df["shutter_time"].between(_start, _end), "shutter_index"] = int(_idx)
-        _df.loc[_df["shutter_time"].between(_start, _end), "shutter_counts"] = int(_cnt)
-        _df.loc[_df["shutter_time"].between(_start, _end), "shutter_n_ratio"] = _snr
+    for row in _df_shutter.itertuples(index=False):
+        _in_window = _df["shutter_time"].between(row.start_frame, row.end_frame)
+        _df.loc[_in_window, "shutter_index"] = int(row.shutter_index)
+        _df.loc[_in_window, "shutter_counts"] = int(row.shutter_counts)
+        _df.loc[_in_window, "shutter_n_ratio"] = row.shutter_n_ratio
+
+    _unmatched = _df["shutter_index"] == -1
+    if _unmatched.any():
+        _first = _df.loc[_unmatched, "shutter_time"].iloc[0]
+        raise ValueError(
+            f"{int(_unmatched.sum())} spectra row(s) fall outside every shutter "
+            f"window (first offender: shutter_time={_first}); the occupancy "
+            "correction would silently produce NaN frames for them"
+        )
     return _df
 
 
@@ -219,7 +253,12 @@ def correct_images(
     _img = np.asarray(images)
     _pop = calc_pixel_occupancy_probability(images, metadata)
     _snr = metadata["shutter_n_ratio"].values[:, np.newaxis, np.newaxis]
-    _rst = _img / (1 - _pop) / _snr
+    # occupancy at or above 1 makes the (1 - pop) denominator vanish or go
+    # negative (the cumsum can exceed the shutter counts); mask those pixels
+    # to NaN instead of emitting inf or silently negative intensities
+    _denom = 1.0 - _pop
+    with np.errstate(divide="ignore", invalid="ignore"):
+        _rst = np.where(_denom > _OCCUPANCY_EPS, _img / _denom, np.nan) / _snr
     # NOTE: The very first and last image of each frame (shutter_index)
     #       needs specicial correction, therefore removing them from
     #       standard pipeline if specified

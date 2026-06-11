@@ -11,6 +11,7 @@ This module contains necessary preprocessing toolkits for neutron imaging, inclu
 import warnings
 import json
 import itertools
+import numpy as np
 import pandas as pd
 from PIL import Image
 from datetime import datetime
@@ -164,7 +165,9 @@ def _generate_config_CG1D(
     lbs = ["aperture_HR", "aperture_HL", "aperture_VT", "aperture_VB"]
     lbs_binned = [f"{lb}_binned" for lb in lbs]
     for lb, lb_binned in zip(lbs, lbs_binned):
-        df.loc[:, lb_binned] = 0
+        # float init: binned values are aperture means, and an int64 0
+        # surviving into the config dict is not JSON serializable
+        df.loc[:, lb_binned] = 0.0
 
     # group by
     # - exposure_time
@@ -278,36 +281,45 @@ def _generate_config_CG1D(
                 )
 
             # generate time range
-            # NOTE: need confirmation from original developer
-            _tmp["time_range_s"] = {}
-            first_sample_time = (
-                _tmp["first_images"]["sample"]["time_stamp"]
-                if "time_stamp" in _tmp["first_images"]["sample"].keys()
-                else 0.0
-            )
-            first_ob_time = (
-                _tmp["first_images"]["ob"]["time_stamp"]
-                if "time_stamp" in _tmp["first_images"]["ob"].keys()
-                else 0.0
-            )
-            _tmp["time_range_s"]["before"] = max(first_sample_time - first_ob_time, 0)
-            last_sample_time = (
-                _tmp["last_images"]["sample"]["time_stamp"]
-                if "time_stamp" in _tmp["last_images"]["sample"].keys()
-                else 0.0
-            )
-            last_ob_time = (
-                _tmp["first_images"]["ob"]["time_stamp"]
-                if "time_stamp" in _tmp["first_images"]["ob"].keys()
-                else 0.0
-            )
-            _tmp["time_range_s"]["after"] = max(last_sample_time - last_ob_time, 0)
+            # before: how long the first sample image trails the first OB;
+            # after: how long the last OB trails the last sample image
+            # (reference implementation: python_notebooks_data_reduction,
+            # normalization_with_simplify_selection.py — previously 'after'
+            # read the FIRST ob and subtracted in the wrong order)
+            # a category missing sample or OB images has no defined range:
+            # report 0.0 (the previous 0.0-timestamp fallback leaked raw
+            # epoch seconds, ~1.6e9, into the config)
+            first_sample_time = _tmp["first_images"]["sample"].get("time_stamp")
+            first_ob_time = _tmp["first_images"]["ob"].get("time_stamp")
+            last_sample_time = _tmp["last_images"]["sample"].get("time_stamp")
+            last_ob_time = _tmp["last_images"]["ob"].get("time_stamp")
+            _tmp["time_range_s"] = {
+                "before": (
+                    max(first_sample_time - first_ob_time, 0)
+                    if first_sample_time is not None and first_ob_time is not None
+                    else 0.0
+                ),
+                "after": (
+                    max(last_ob_time - last_sample_time, 0)
+                    if last_sample_time is not None and last_ob_time is not None
+                    else 0.0
+                ),
+            }
 
     # dump dict to desired format if output file name provided
     if output is not None:
         _write_config_to_disk(cfg_dict, output, df)
 
     return cfg_dict, df
+
+
+def _json_default(value):
+    """Convert numpy scalars (pandas yields int64/float64) to JSON-native types"""
+    if isinstance(value, np.integer):
+        return int(value)
+    if isinstance(value, np.floating):
+        return float(value)
+    raise TypeError(f"Object of type {type(value).__name__} is not JSON serializable")
 
 
 def _write_config_to_disk(
@@ -318,7 +330,7 @@ def _write_config_to_disk(
     _file_extension = filename.split(".")[-1]
     if "json" in _file_extension.lower():
         with open(filename, "w") as outputf:
-            json.dump(cfg_dict, outputf, indent=2, sort_keys=True)
+            json.dump(cfg_dict, outputf, indent=2, sort_keys=True, default=_json_default)
     elif "csv" in _file_extension.lower():
         dataframe.to_csv(filename, sep="\t", index=False)
     else:
@@ -327,7 +339,7 @@ def _write_config_to_disk(
         )
         filename += ".json"
         with open(filename, "w") as outputf:
-            json.dump(cfg_dict, outputf, indent=2, sort_keys=True)
+            json.dump(cfg_dict, outputf, indent=2, sort_keys=True, default=_json_default)
 
 
 if __name__ == "__main__":
