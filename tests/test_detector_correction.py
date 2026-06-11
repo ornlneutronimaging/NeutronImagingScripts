@@ -6,20 +6,21 @@ NetronImaging
 """
 
 import os
-import pytest
-import pandas as pd
+
 import numpy as np
+import pandas as pd
+import pytest
+
 from neutronimaging.detector_correction import (
     calc_pixel_occupancy_probability,
     correct_images,
     load_images,
+    merge_meta_data,
     read_shutter_count,
     read_shutter_time,
     read_spectra,
-    merge_meta_data,
     skipping_meta_data,
 )
-
 
 _file_root = os.path.dirname(os.path.abspath(__file__))
 test_data_dir = os.path.join(_file_root, "../data")

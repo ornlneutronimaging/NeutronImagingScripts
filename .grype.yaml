@@ -1,0 +1,27 @@
+# Grype ignore rules for the CI dependency gate (see
+# audits/grype_vs_pip-audit_decision_memo_2026-06-10.md in the workspace).
+# Every entry needs a reason and a revisit condition — this file is the
+# reviewable record of accepted risk.
+
+ignore:
+  # CPython 3.14.5 is the newest conda-forge build today (2026-06-11); these
+  # are fixed upstream but no packaged fix is installable yet. Remove these
+  # entries when conda-forge ships the next CPython 3.14 patch release.
+  - vulnerability: CVE-2025-12781
+    package:
+      name: python
+  - vulnerability: CVE-2025-15366
+    package:
+      name: python
+  - vulnerability: CVE-2025-15367
+    package:
+      name: python
+  - vulnerability: CVE-2026-3276
+    package:
+      name: python
+  - vulnerability: CVE-2026-7210
+    package:
+      name: python
+  - vulnerability: CVE-2026-7774
+    package:
+      name: python
