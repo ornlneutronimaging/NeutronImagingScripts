@@ -102,7 +102,7 @@ astropy = "*"
 tifffile = "*"
 tqdm = "*"
 docopt = "*"
-pillow = ">=12.2.0"   # CVE-2026-25990, CVE-2026-40192
+pillow = ">=12.2.0" # CVE-2026-25990, CVE-2026-40192
 
 [tool.pixi.pypi-dependencies]
 # editable self-install for development
@@ -128,11 +128,11 @@ python = "3.13.*"
 python = "3.14.*"
 
 [tool.pixi.feature.test.dependencies]
-pytest = ">=9.0.3"  # CVE-2025-71176 fixed in 9.0.3
+pytest = ">=9.0.3" # CVE-2025-71176 fixed in 9.0.3
 pytest-cov = "*"
 
 [tool.pixi.feature.developer.dependencies]
-pip = ">=26.0"      # CVE-2026-1703
+pip = ">=26.0"     # CVE-2026-1703
 pre-commit = "*"
 ruff = "*"
 versioningit = "*"
@@ -161,3 +161,17 @@ exclude = ["example/**", "**/*.ipynb"]
 [tool.ruff.lint]
 select = ["A", "ARG", "ASYNC", "BLE", "E", "F", "I", "N", "UP032", "W"]
 ignore = []
+
+[tool.ruff.lint.per-file-ignores]
+# N806: the uppercase locals mirror the TIFF tag-ID names from the
+#   EPICS/detector spec; renaming them would hurt cross-referencing
+# N802: generate_config_CG1D is public API (notebooks + CLI import it)
+# E722: the bare except is a known defect tracked in the 2026-06-10 audit
+#   (issue #13) — fixing it changes behavior, which belongs in a
+#   correctness PR, not this packaging migration
+"neutronimaging/preprocess.py" = ["N806", "N802", "E722"]
+# EPOCH_OFFSET is a physical constant, scoped to the one converter using it
+"neutronimaging/util.py" = ["N806"]
+# ARG002: test stubs intentionally mirror full third-party signatures
+# N802: test names embed the public API name they cover
+"tests/*" = ["ARG002", "N802"]

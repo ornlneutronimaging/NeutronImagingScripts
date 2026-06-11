@@ -8,19 +8,18 @@ This module contains necessary preprocessing toolkits for neutron imaging, inclu
 -
 """
 
-import warnings
-import json
 import itertools
+import json
+import warnings
+from datetime import datetime
+from typing import List, Tuple, Union
+
 import numpy as np
 import pandas as pd
 from PIL import Image
-from datetime import datetime
+
 from neutronimaging.npmath import find_edges_1d
-from neutronimaging.util import dir_tree_to_list
-from neutronimaging.util import probe_folder
-from neutronimaging.util import convert_epics_timestamp_to_rfc3339_timestamp
-from typing import List, Tuple
-from typing import Union
+from neutronimaging.util import convert_epics_timestamp_to_rfc3339_timestamp, dir_tree_to_list, probe_folder
 
 
 def extract_metadata_tiff(tiffname: str) -> Tuple[list, list]:
@@ -124,7 +123,7 @@ def generate_config_CG1D(
             df_list.append(df)
         df = pd.concat(df_list)
     else:
-        raise ValueError(f"input dir has to be a string a list of strings")
+        raise ValueError("input dir has to be a string a list of strings")
 
     # dump dict to desired format if output file name provided
     if output is not None:
@@ -188,7 +187,7 @@ def _generate_config_CG1D(
         aperture_VTs = df.loc[df["exposure_time"] == exposure, "aperture_VT_binned"].unique()
         aperture_VBs = df.loc[df["exposure_time"] == exposure, "aperture_VB_binned"].unique()
         categories = itertools.product(detector_names, aperture_HRs, aperture_HLs, aperture_VTs, aperture_VBs)
-        # last, populate each categroy
+        # last, populate each category
         metadata_info_keys = [
             "detector_manufacturer",
             "aperture_HR",
