@@ -90,15 +90,11 @@ class TestMcpDetectorCorrectionCli:
         assert len(tiffs) == ds["n_groups"] * (ds["frames_per_group"] - 2)
         assert (ds["output_dir"] / f"{ds['prefix']}_Spectra.txt").exists()
 
-    @pytest.mark.xfail(
-        strict=True,
-        reason="NeuNorm 1.x export zip-truncates the full filename list against the "
-        "skip-reduced stack, mislabeling kept frames with the first N source names; "
-        "the loader-replacement PR fixes this to use the true kept source names "
-        "(remove this marker there).",
-    )
-    def test_skipimg_exports_true_source_names(self, synthetic_mcp_dataset, script_path):
-        """Kept frames must be written under their true source stems."""
+    def test_skipimg_exports_true_source_names_and_content(self, synthetic_mcp_dataset, script_path):
+        """Kept frames must be written under their true source stems, AND
+        each file must contain the corrected frame belonging to that source
+        — name-set equality alone would not catch frames written under the
+        right names in the wrong order."""
         ds = synthetic_mcp_dataset
         result = _run_cli(
             script_path("mcp_detector_correction.py"), "--skipimg", ds["input_dir"], ds["output_dir"]
@@ -113,6 +109,83 @@ class TestMcpDetectorCorrectionCli:
         expected_names = {f"{ds['prefix']}_{k:05d}.tif" for k in kept}
         actual_names = {t.name for t in ds["output_dir"].glob("*.tif")}
         assert actual_names == expected_names
+
+        # content mapping: row r of the skip-corrected stack belongs to
+        # kept source frame kept[r]
+        expected = _expected_corrected(ds["input_dir"], skip=True).astype(np.float32)
+        assert expected.shape[0] == len(kept)
+        for row, k in enumerate(kept):
+            on_disk = _read_tiff(ds["output_dir"] / f"{ds['prefix']}_{k:05d}.tif")
+            np.testing.assert_array_equal(
+                on_disk,
+                expected[row],
+                err_msg=f"frame written under source name {k:05d} does not match its corrected data",
+            )
+
+    def test_chip_correction_gated_off_by_default_and_invocable(self, synthetic_mcp_dataset, monkeypatch):
+        """The Timepix chip-geometry correction is a proper optional feature:
+        off by default, and when enabled it routes the corrected stack
+        through TimepixGeometryCorrection (stubbed here so the test does not
+        depend on the optional package being installed)."""
+        import sys
+        import types
+
+        ds = synthetic_mcp_dataset
+        input_dir = ds["input_dir"]
+        meta = merge_meta_data(
+            read_shutter_count(str(input_dir / f"{ds['prefix']}_ShutterCount.txt")),
+            read_shutter_time(str(input_dir / f"{ds['prefix']}_ShutterTimes.txt")),
+            read_spectra(str(input_dir / f"{ds['prefix']}_Spectra.txt")),
+        )
+        images = load_images(str(input_dir))
+
+        marker = np.full((ds["n_frames"], 4, 4), 42.0, dtype=np.float32)
+        received = {}
+
+        class _StubCorrector:
+            def __init__(self, raw_images=None, images_path=None, config=None):
+                received["raw_images"] = raw_images
+
+            def correct(self, display=False):
+                return marker
+
+        stub_module = types.ModuleType("timepix_geometry_correction.correct")
+        stub_module.TimepixGeometryCorrection = _StubCorrector
+        stub_package = types.ModuleType("timepix_geometry_correction")
+        stub_package.correct = stub_module
+        monkeypatch.setitem(sys.modules, "timepix_geometry_correction", stub_package)
+        monkeypatch.setitem(sys.modules, "timepix_geometry_correction.correct", stub_module)
+
+        # default: corrector never touched
+        default_result = correct_images(images, meta)
+        assert "raw_images" not in received
+
+        # enabled: stack routed through the corrector, its output returned
+        enabled_result = correct_images(images, meta, apply_chip_correction=True)
+        np.testing.assert_array_equal(received["raw_images"], default_result)
+        np.testing.assert_array_equal(enabled_result, marker)
+
+    def test_chip_correction_missing_package_is_actionable(self, synthetic_mcp_dataset):
+        """Enabling the flag without the optional package must raise an
+        ImportError that says what to install, not a bare traceback."""
+        try:
+            import timepix_geometry_correction  # noqa: F401
+
+            pytest.skip("timepix-geometry-correction installed; error path not reachable")
+        except ImportError:
+            pass
+
+        ds = synthetic_mcp_dataset
+        input_dir = ds["input_dir"]
+        meta = merge_meta_data(
+            read_shutter_count(str(input_dir / f"{ds['prefix']}_ShutterCount.txt")),
+            read_shutter_time(str(input_dir / f"{ds['prefix']}_ShutterTimes.txt")),
+            read_spectra(str(input_dir / f"{ds['prefix']}_Spectra.txt")),
+        )
+        images = load_images(str(input_dir))
+
+        with pytest.raises(ImportError, match="timepix-geometry-correction"):
+            correct_images(images, meta, apply_chip_correction=True)
 
     def test_skip_selector_consistency(self, synthetic_mcp_dataset):
         """correct_images inlines its own skip logic; pin that it selects the

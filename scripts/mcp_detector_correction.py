@@ -4,24 +4,29 @@
 """MCP Detector Correction.
 
 Usage:
-    mcp_detector_correction [--skipimg] [--verbose] <input_dir> <output_dir>
+    mcp_detector_correction [--skipimg] [--chipcorrection] [--verbose] <input_dir> <output_dir>
     mcp_detector_correction (-h | --help)
     mcp_detector_correction --version
 
 Options:
-    --skipimg    skip first and last image
-    -h --help    print this message
-    --version    print version info
-    --verbose    verbose output
+    --skipimg         skip first and last image
+    --chipcorrection  additionally apply Timepix chip-geometry correction
+                      (requires the optional timepix-geometry-correction package)
+    -h --help         print this message
+    --version         print version info
+    --verbose         verbose output
 """
 
 import glob
 import os
 import shutil
+import numpy as np
+import tifffile
 from docopt import docopt
 from pathlib import Path
 from neutronimaging.detector_correction import (
     correct_images,
+    list_image_files,
     load_images,
     read_shutter_count,
     read_shutter_time,
@@ -74,14 +79,15 @@ if __name__ == "__main__":
 
     # load images
     print("Loading images into memory")
-    o_norm = load_images(input_dir, nbr_of_duplicated_runs)
+    images = load_images(input_dir, nbr_of_duplicated_runs)
 
     # perform image correction
     print("Perform correction")
     img_corrected = correct_images(
-        o_norm,
+        images,
         df_meta,
         skip_first_and_last=skip_first_last_img,
+        apply_chip_correction=args["--chipcorrection"],
     )
     print("corrected image summary")
     print(f"\tdimension:\t{img_corrected.shape}")
@@ -89,8 +95,21 @@ if __name__ == "__main__":
 
     # export results
     print(f"Writing data to {output_dir}")
-    o_norm.data["sample"]["data"] = img_corrected
-    o_norm.export(folder=output_dir, data_type="sample")
+    # one float32 TIFF per kept frame, named after its true source frame
+    # (NeuNorm 1.x zip-truncated the full name list against the skip-reduced
+    # stack, mislabeling kept frames with the first N source names)
+    source_names = list_image_files(input_dir, nbr_of_duplicated_runs)
+    if skip_first_last_img:
+        kept_run_nums = skipping_meta_data(df_meta)["run_num"].values
+        source_names = [source_names[i] for i in kept_run_nums]
+    if len(source_names) != img_corrected.shape[0]:
+        raise RuntimeError(
+            f"corrected stack has {img_corrected.shape[0]} frames but "
+            f"{len(source_names)} source names were selected for export"
+        )
+    for src, frame in zip(source_names, img_corrected):
+        out_name = os.path.join(output_dir, Path(src).stem + ".tif")
+        tifffile.imwrite(out_name, frame.astype(np.float32))
     out_shutter_count = os.path.join(output_dir,
                                      os.path.basename(shutter_count_file))
     out_shutter_time = os.path.join(output_dir,
