@@ -1,0 +1,177 @@
+########################
+### Project Metadata ###
+########################
+[project]
+name = "NeutronImaging"
+description = "Neutron Imaging Reduction"
+dynamic = ["version"]
+# SPEC 0 (scientific-python support window); org policy decided 2026-06-10
+requires-python = ">=3.12"
+# NOTE: no license field yet — LICENSE (GPLv3), the old setup.py (BSD) and
+# the old classifiers (LGPLv2) contradict each other; team decision tracked
+# for the docs/release PR. The LICENSE file still ships in the sdist.
+keywords = ["neutron", "imaging", "mcp"]
+readme = "README.md"
+authors = [{ name = "Chen Zhang", email = "zhangc@ornl.gov" }]
+maintainers = [{ name = "Chen Zhang", email = "zhangc@ornl.gov" }]
+
+dependencies = [
+  # Dependencies available from both PyPI and conda
+  "numpy",
+  "pandas",
+  # FITS frame loading (replaced NeuNorm 1.x, see PR #19)
+  "astropy",
+  # float32 TIFF export
+  "tifffile",
+  # progress bars (widget in Jupyter, console elsewhere)
+  "tqdm",
+  # CLI argument parsing
+  "docopt",
+  # TIFF metadata extraction in preprocess.py (was an undeclared
+  # transitive dependency via NeuNorm/matplotlib before)
+  "pillow",
+]
+
+[project.optional-dependencies]
+# Timepix chip-geometry correction (--chipcorrection /
+# apply_chip_correction=True); only pre-releases on PyPI so far
+chipcorrection = ["timepix-geometry-correction>=0.2.0.dev7"]
+# only the example notebooks need plotting
+jupyter = ["matplotlib", "ipympl"]
+
+[project.scripts]
+mcp_detector_correction = "neutronimaging.cli.mcp_detector_correction:main"
+generate_config = "neutronimaging.cli.generate_config:main"
+
+[project.urls]
+homepage = "https://github.com/ornlneutronimaging/NeutronImagingScripts"
+repository = "https://github.com/ornlneutronimaging/NeutronImagingScripts"
+issues = "https://github.com/ornlneutronimaging/NeutronImagingScripts/issues"
+
+####################
+### Build config ###
+####################
+
+[build-system]
+build-backend = "hatchling.build"
+requires = ["hatchling", "versioningit"]
+
+[tool.hatch.version]
+source = "versioningit"
+
+[tool.hatch.build.hooks.versioningit-onbuild]
+source-file = "neutronimaging/_version.py"
+build-file = "neutronimaging/_version.py"
+
+[tool.hatch.build]
+artifacts = ["neutronimaging/_version.py"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["neutronimaging"]
+
+[tool.versioningit.vcs]
+method = "git"
+default-tag = "1.5.0"
+
+[tool.versioningit.next-version]
+method = "minor"
+
+[tool.versioningit.format]
+distance = "{next_version}.dev{committer_date:%Y%m%d%H%M%S}"
+dirty = "{version}"
+distance-dirty = "{next_version}.dev{committer_date:%Y%m%d%H%M%S}"
+
+[tool.versioningit.write]
+file = "neutronimaging/_version.py"
+
+###################
+### Pixi config ###
+###################
+
+[tool.pixi.workspace]
+channels = ["conda-forge"]
+platforms = ["linux-64", "osx-arm64"]
+
+## Dependency tables - these override the [project] dependencies for pixi
+
+[tool.pixi.dependencies]
+# Conda package dependencies
+numpy = "*"
+pandas = "*"
+astropy = "*"
+tifffile = "*"
+tqdm = "*"
+docopt = "*"
+pillow = ">=12.2.0" # CVE-2026-25990, CVE-2026-40192
+
+[tool.pixi.pypi-dependencies]
+# editable self-install for development
+neutronimaging = { path = ".", editable = true }
+
+# Environments and Features
+
+[tool.pixi.environments]
+default = { features = ["test", "developer"], solve-group = "default" }
+# per-version test environments: the CI matrix tests real interpreter
+# versions (SPEC 0 window)
+py312 = { features = ["test", "py312"], solve-group = "py312" }
+py313 = { features = ["test", "py313"], solve-group = "py313" }
+py314 = { features = ["test", "py314"], solve-group = "py314" }
+
+[tool.pixi.feature.py312.dependencies]
+python = "3.12.*"
+
+[tool.pixi.feature.py313.dependencies]
+python = "3.13.*"
+
+[tool.pixi.feature.py314.dependencies]
+python = "3.14.*"
+
+[tool.pixi.feature.test.dependencies]
+pytest = ">=9.0.3" # CVE-2025-71176 fixed in 9.0.3
+pytest-cov = "*"
+
+[tool.pixi.feature.developer.dependencies]
+pip = ">=26.0"     # CVE-2026-1703
+pre-commit = "*"
+ruff = "*"
+versioningit = "*"
+
+[tool.pixi.tasks]
+test = { description = "Run the test suite", cmd = "pytest" }
+clean = { cmd = "rm -rf .pytest_cache .ruff_cache **/*.egg-info **/dist **/__pycache__", description = "Clean up caches and build artifacts" }
+
+##############
+### Pytest ###
+##############
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-v"
+
+############
+### Ruff ###
+############
+
+[tool.ruff]
+target-version = "py312"
+line-length = 120
+exclude = ["example/**", "**/*.ipynb"]
+
+[tool.ruff.lint]
+select = ["A", "ARG", "ASYNC", "BLE", "E", "F", "I", "N", "UP032", "W"]
+ignore = []
+
+[tool.ruff.lint.per-file-ignores]
+# N806: the uppercase locals mirror the TIFF tag-ID names from the
+#   EPICS/detector spec; renaming them would hurt cross-referencing
+# N802: generate_config_CG1D is public API (notebooks + CLI import it)
+# E722: the bare except is a known defect tracked in the 2026-06-10 audit
+#   (issue #13) — fixing it changes behavior, which belongs in a
+#   correctness PR, not this packaging migration
+"neutronimaging/preprocess.py" = ["N806", "N802", "E722"]
+# EPOCH_OFFSET is a physical constant, scoped to the one converter using it
+"neutronimaging/util.py" = ["N806"]
+# ARG002: test stubs intentionally mirror full third-party signatures
+# N802: test names embed the public API name they cover
+"tests/*" = ["ARG002", "N802"]

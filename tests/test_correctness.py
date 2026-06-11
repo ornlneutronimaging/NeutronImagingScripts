@@ -117,9 +117,7 @@ class TestCliSpectraFormat:
         copies the headerless TSV original verbatim — read_spectra
         mis-parsed the rewritten file into one un-split column"""
         ds = synthetic_mcp_dataset
-        result = _run_cli(
-            script_path("mcp_detector_correction.py"), "--skipimg", ds["input_dir"], ds["output_dir"]
-        )
+        result = _run_cli(script_path("mcp_detector_correction.py"), "--skipimg", ds["input_dir"], ds["output_dir"])
         assert result.returncode == 0, result.stderr
 
         out_spectra = ds["output_dir"] / f"{ds['prefix']}_Spectra.txt"

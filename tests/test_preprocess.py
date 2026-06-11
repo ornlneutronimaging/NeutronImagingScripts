@@ -5,7 +5,9 @@ Unit testing for preprocess module
 """
 
 import os
+
 import pytest
+
 from neutronimaging.preprocess import generate_config_CG1D
 
 _file_root = os.path.dirname(os.path.abspath(__file__))

@@ -4,23 +4,22 @@
 
 """
 This module contains necessary preprocessing toolkits for neutron imaging, including
-- CG1D: reactor imaging beamline
--  
+- CG1D (reactor imaging beamline): TIFF metadata extraction and measurement
+  configuration generation
 """
 
-import warnings
-import json
 import itertools
+import json
+import warnings
+from datetime import datetime
+from typing import List, Tuple, Union
+
 import numpy as np
 import pandas as pd
 from PIL import Image
-from datetime import datetime
+
 from neutronimaging.npmath import find_edges_1d
-from neutronimaging.util import dir_tree_to_list
-from neutronimaging.util import probe_folder
-from neutronimaging.util import convert_epics_timestamp_to_rfc3339_timestamp
-from typing import List, Tuple
-from typing import Union
+from neutronimaging.util import convert_epics_timestamp_to_rfc3339_timestamp, dir_tree_to_list, probe_folder
 
 
 def extract_metadata_tiff(tiffname: str) -> Tuple[list, list]:
@@ -57,9 +56,7 @@ def extract_metadata_tiff(tiffname: str) -> Tuple[list, list]:
     finally:
         time_stamp = convert_epics_timestamp_to_rfc3339_timestamp(time_stamp)
 
-    time_stamp_user_format = datetime.fromtimestamp(time_stamp).strftime(
-        "%Y-%m-%d %H:%M:%S"
-    )
+    time_stamp_user_format = datetime.fromtimestamp(time_stamp).strftime("%Y-%m-%d %H:%M:%S")
 
     header = [
         "filename",
@@ -116,9 +113,7 @@ def generate_config_CG1D(
     """frontend to allow list of rootdirs"""
     cfg_dict = {}
     if isinstance(image_dir, str):
-        cfg_dict, df = _generate_config_CG1D(
-            image_dir, openbeam_dir, darkfield_dir, None, tolerance_aperature
-        )
+        cfg_dict, df = _generate_config_CG1D(image_dir, openbeam_dir, darkfield_dir, None, tolerance_aperature)
     elif isinstance(image_dir, list):
         df_list = []
         for this_dir in image_dir:
@@ -128,7 +123,7 @@ def generate_config_CG1D(
             df_list.append(df)
         df = pd.concat(df_list)
     else:
-        raise ValueError(f"input dir has to be a string a list of strings")
+        raise ValueError("input dir has to be a string a list of strings")
 
     # dump dict to desired format if output file name provided
     if output is not None:
@@ -147,11 +142,7 @@ def _generate_config_CG1D(
     # build the metadata DataFrame
     img_list = []
     for _dir in (image_dir, openbeam_dir, darkfield_dir):
-        img_list += [
-            me
-            for me in dir_tree_to_list(probe_folder(_dir), flatten=True, sort=True)
-            if ".tif" in me.lower()
-        ]
+        img_list += [me for me in dir_tree_to_list(probe_folder(_dir), flatten=True, sort=True) if ".tif" in me.lower()]
     meta_data = (extract_metadata_tiff(me) for me in img_list)
 
     # NOTE:
@@ -190,25 +181,13 @@ def _generate_config_CG1D(
                     lb,
                 ].mean()
         # second, find the categories
-        detector_names = df.loc[
-            df["exposure_time"] == exposure, "detector_manufacturer"
-        ].unique()
-        aperture_HRs = df.loc[
-            df["exposure_time"] == exposure, "aperture_HR_binned"
-        ].unique()
-        aperture_HLs = df.loc[
-            df["exposure_time"] == exposure, "aperture_HL_binned"
-        ].unique()
-        aperture_VTs = df.loc[
-            df["exposure_time"] == exposure, "aperture_VT_binned"
-        ].unique()
-        aperture_VBs = df.loc[
-            df["exposure_time"] == exposure, "aperture_VB_binned"
-        ].unique()
-        categories = itertools.product(
-            detector_names, aperture_HRs, aperture_HLs, aperture_VTs, aperture_VBs
-        )
-        # last, populate each categroy
+        detector_names = df.loc[df["exposure_time"] == exposure, "detector_manufacturer"].unique()
+        aperture_HRs = df.loc[df["exposure_time"] == exposure, "aperture_HR_binned"].unique()
+        aperture_HLs = df.loc[df["exposure_time"] == exposure, "aperture_HL_binned"].unique()
+        aperture_VTs = df.loc[df["exposure_time"] == exposure, "aperture_VT_binned"].unique()
+        aperture_VBs = df.loc[df["exposure_time"] == exposure, "aperture_VB_binned"].unique()
+        categories = itertools.product(detector_names, aperture_HRs, aperture_HLs, aperture_VTs, aperture_VBs)
+        # last, populate each category
         metadata_info_keys = [
             "detector_manufacturer",
             "aperture_HR",
@@ -224,9 +203,7 @@ def _generate_config_CG1D(
             # generate list of images (data_type: Raw)
             # generate list of ob (data_type: OB)
             # generate list of df (data_type: DF)
-            for groupname, datatype in zip(
-                ("list_sample", "list_ob", "list_df"), ("Raw", "OB", "DF")
-            ):
+            for groupname, datatype in zip(("list_sample", "list_ob", "list_df"), ("Raw", "OB", "DF")):
                 _df_tmp = df.loc[
                     (df["exposure_time"] == exposure)
                     & (df["detector_manufacturer"] == me[0])
@@ -238,8 +215,7 @@ def _generate_config_CG1D(
                     list_sample_keys,
                 ]
                 _tmp[groupname] = [
-                    {k: v for k, v in zip(list_sample_keys, row)}
-                    for _, row in enumerate(_df_tmp.to_numpy())
+                    {k: v for k, v in zip(list_sample_keys, row)} for _, row in enumerate(_df_tmp.to_numpy())
                 ]
 
             # generate for first images
@@ -334,9 +310,7 @@ def _write_config_to_disk(
     elif "csv" in _file_extension.lower():
         dataframe.to_csv(filename, sep="\t", index=False)
     else:
-        warnings.warn(
-            f"Unsupported file extension provided: {_file_extension}, falling back to json"
-        )
+        warnings.warn(f"Unsupported file extension provided: {_file_extension}, falling back to json")
         filename += ".json"
         with open(filename, "w") as outputf:
             json.dump(cfg_dict, outputf, indent=2, sort_keys=True, default=_json_default)

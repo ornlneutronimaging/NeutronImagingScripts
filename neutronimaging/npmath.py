@@ -8,12 +8,13 @@ subroutines, including
 """
 
 from typing import List
+
 import numpy as np
 
 
 def find_edges_1d(array: np.ndarray, atol: float = 1) -> List:
     """
-    Locate the lower and upper edges of binning using given absoute
+    Locate the lower and upper edges of binning using given absolute
     tolerance.
 
     >> test_array = np.array([40, 40.5, 42, 41.7, 38])
@@ -25,12 +26,8 @@ def find_edges_1d(array: np.ndarray, atol: float = 1) -> List:
     else:
         array = np.sort(array)
         gaps = array[1:] - array[:-1]
-        lower_edge = [array[0] - atol / 2] + list(
-            array[np.where(gaps > atol / 2)] + atol / 2
-        )
-        upper_edge = list(array[np.where(gaps > atol / 2)] + atol / 2) + [
-            array[-1] + atol / 2
-        ]
+        lower_edge = [array[0] - atol / 2] + list(array[np.where(gaps > atol / 2)] + atol / 2)
+        upper_edge = list(array[np.where(gaps > atol / 2)] + atol / 2) + [array[-1] + atol / 2]
         return zip(lower_edge, upper_edge)
 
 

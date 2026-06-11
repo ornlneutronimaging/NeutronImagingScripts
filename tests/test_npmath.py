@@ -7,6 +7,7 @@ NetronImaging
 
 import numpy as np
 import pytest
+
 from neutronimaging.npmath import find_edges_1d
 
 

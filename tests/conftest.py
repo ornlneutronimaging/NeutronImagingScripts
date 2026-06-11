@@ -67,9 +67,7 @@ def synthetic_mcp_dataset(tmp_path):
     # Spectra.txt: time\tcounts, headerless TSV; 4 times inside each window
     window_starts = [0.001, 0.004, 0.007]
     spectra_times = [start + offset for start in window_starts for offset in (0.0002, 0.0008, 0.0014, 0.0019)]
-    lines = [
-        f"{t:.6f}\t{value * shape[0] * shape[1]}" for t, value in zip(spectra_times, frame_values, strict=True)
-    ]
+    lines = [f"{t:.6f}\t{value * shape[0] * shape[1]}" for t, value in zip(spectra_times, frame_values, strict=True)]
     (input_dir / f"{prefix}_Spectra.txt").write_text("\n".join(lines) + "\n")
 
     return {
