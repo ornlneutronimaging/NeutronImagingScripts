@@ -28,8 +28,7 @@ $ pip install NeutronImaging
 ```
 
 > NOTE: the current PyPI release (1.2) long predates the NeuNorm removal and the
-> 2026 correctness fixes; install from git until v1.6 is released (pending a
-> license decision — see Developer Notes).
+> 2026 correctness fixes; install from git until v1.6 is released.
 
 ### Developers
 Development uses [pixi](https://pixi.sh) to manage the environment. After cloning
@@ -149,11 +148,12 @@ Writing data to tmp
 
 ### Releasing
 
-1. Settle the license metadata first (LICENSE file says GPLv3, the pre-migration
-   setup.py said BSD, old classifiers said LGPLv2) — blocking for any PyPI upload.
-2. Tag `vX.Y` on `main` (versioningit derives versions from tags).
-3. Build and upload manually (`python -m build`, `twine upload dist/*`) — by decision
+1. Tag `vX.Y` on `main` (versioningit derives versions from tags).
+2. Build and upload manually (`python -m build`, `twine upload dist/*`) — by decision
    there is no publish automation for this repo (no known downstream pip consumers).
+
+The package is MIT-licensed (team decision 2026-06-12, the NDP standard), which
+settled the historical GPLv3/BSD/LGPLv2 metadata contradiction.
 
 ### Branch model
 

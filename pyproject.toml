@@ -7,9 +7,10 @@ description = "Neutron Imaging Reduction"
 dynamic = ["version"]
 # SPEC 0 (scientific-python support window); org policy decided 2026-06-10
 requires-python = ">=3.12"
-# NOTE: no license field yet — LICENSE (GPLv3), the old setup.py (BSD) and
-# the old classifiers (LGPLv2) contradict each other; team decision tracked
-# for the docs/release PR. The LICENSE file still ships in the sdist.
+# MIT per team decision 2026-06-12 (NDP standard license), superseding the
+# historical GPLv3-file / BSD-setup.py / LGPLv2-classifier contradiction
+license = "MIT"
+license-files = ["LICENSE"]
 keywords = ["neutron", "imaging", "mcp"]
 readme = "README.md"
 authors = [{ name = "Chen Zhang", email = "zhangc@ornl.gov" }]

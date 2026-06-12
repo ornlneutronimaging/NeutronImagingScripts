@@ -5,8 +5,8 @@ occupancy correction (VENUS) and CG1D configuration generation.
 
 ## Names
 
-- PyPI package: `NeutronImaging` (PyPI still serves the ancient 1.2; v1.6
-  pending a license decision)
+- PyPI package: `NeutronImaging` (PyPI still serves the ancient 1.2 until
+  the v1.6 release)
 - Python module: `neutronimaging` (flat layout, no src/)
 - GitHub repo: `NeutronImagingScripts`
 
@@ -29,9 +29,9 @@ Pixi-managed — run everything through `pixi run`.
   gitignored. Dev versions read `1.5.0.dev*` because tag v1.5 is not an
   ancestor of main — the explicit v1.6 release tag supersedes this.
 - No publish automation by decision (no known downstream pip consumers);
-  release = settle license → tag on main → `python -m build` + twine.
-- LICENSE contradiction (GPLv3 file / BSD ex-setup.py / LGPLv2 ex-classifier)
-  blocks any PyPI upload — team decision pending.
+  release = tag on main → `python -m build` + twine.
+- License is MIT (team decision 2026-06-12, NDP standard) — this settled the
+  historical GPLv3-file / BSD-setup.py / LGPLv2-classifier contradiction.
 
 ## Branch model
 
