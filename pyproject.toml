@@ -67,6 +67,11 @@ build-file = "neutronimaging/_version.py"
 [tool.hatch.build]
 artifacts = ["neutronimaging/_version.py"]
 
+[tool.hatch.build.targets.sdist]
+# keep the sdist installable-sized: data/ is ~571 MB (PyPI caps files at
+# 100 MB) and tests/ cannot run without it; both stay git-only
+exclude = ["data", "tests", "example", "pixi.lock"]
+
 [tool.hatch.build.targets.wheel]
 packages = ["neutronimaging"]
 
