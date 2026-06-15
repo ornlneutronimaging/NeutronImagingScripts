@@ -110,6 +110,9 @@ Usage:
 ```
 
 Therefore, you can process the example data with the following command at the root of this repo
+(the `data/` tree is not tracked in git — fetch it once with
+`pixi run python -c 'from neutronimaging.datasets import ensure_repo_data; ensure_repo_data()'`,
+which downloads it into `data/`):
 
 ```bash
 $ mcp_detector_correction data tmp
@@ -134,17 +137,26 @@ Writing data to tmp
 
 ## Developer Notes
 
-### Test data provenance
+### Test/example data
 
-- `data/OB_1_005_*.fits` (916 frames) + `OB_1_005_{ShutterCount,ShutterTimes,Spectra}.txt`:
-  an MCP open-beam measurement used by the detector-correction tests and the example notebook.
-- `data/IPTS-20267/`: CG1D directory trees exercising `generate_config`.
-- `data/ref_pop_prof.npz` / `data/ref_img_mean_prof.npz`: golden per-frame mean profiles
-  for the occupancy correction. Regenerate ONLY after an intentional, reviewed behavior
-  change with `pixi run python scripts/regenerate_test_refs.py` — running it blindly would
-  enshrine whatever the current code does.
-- The `data/` tree is ~571 MB of plain git objects (no LFS — deliberately abandoned in
-  ef81aed); externalizing it (release asset / pooch) is an open team decision.
+The ~570 MB IPTS-20267 dataset is **not tracked in git**. It is published as the
+[`data-v1`](https://github.com/ornlneutronimaging/NeutronImagingScripts/releases/tag/data-v1)
+release asset (`nis-test-data-v1.tar.gz`) and fetched on demand with [pooch](https://www.fatiando.org/pooch/):
+
+- `neutronimaging.datasets.example_data_dir()` returns the data root, downloading it into the
+  pooch cache on first use (resolution order: `$NEUTRONIMAGING_DATA_DIR` → a populated local
+  `data/` → download). The test suite uses this and skips if the data is unreachable.
+- `neutronimaging.datasets.ensure_repo_data()` materializes it at `data/` so the example
+  notebooks' `../data` relative paths resolve.
+- `pixi run fetch-data` pre-downloads it (CI runs this before the tests).
+
+Contents: `OB_1_005_*.fits` (916 frames) + `OB_1_005_{ShutterCount,ShutterTimes,Spectra}.txt`
+(an MCP open-beam measurement for the detector-correction tests/notebook); `IPTS-20267/` (CG1D
+directory trees exercising `generate_config`); and the golden profiles `ref_pop_prof.npz` /
+`ref_img_mean_prof.npz` for the occupancy correction. Regenerate the goldens ONLY after an
+intentional, reviewed behavior change with `pixi run python scripts/regenerate_test_refs.py`,
+then re-tar and bump the tag + sha256 in `neutronimaging/datasets.py`. (No LFS — deliberately
+abandoned in ef81aed.)
 
 ### Releasing
 

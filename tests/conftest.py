@@ -17,7 +17,20 @@ def repo_root() -> Path:
 
 @pytest.fixture(scope="session")
 def data_dir() -> Path:
-    return REPO_ROOT / "data"
+    """Root of the IPTS-20267 example dataset (fetched on demand via pooch).
+
+    A populated ``data/`` in the checkout is used as-is; otherwise the release
+    tarball is downloaded. If neither the data nor a working download is
+    available (e.g. offline dev box without pooch), the dependent tests skip.
+    CI primes the cache with the ``fetch-data`` task, so a genuine integrity
+    failure surfaces there rather than being masked by this skip.
+    """
+    from neutronimaging.datasets import example_data_dir
+
+    try:
+        return example_data_dir()
+    except Exception as exc:  # noqa: BLE001 - offline/missing-pooch is a skip, not a failure
+        pytest.skip(f"example dataset unavailable: {exc}")
 
 
 def _write_fits_int16(path: Path, image: np.ndarray) -> None:

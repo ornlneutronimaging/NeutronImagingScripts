@@ -37,6 +37,19 @@ jobs:
           manifest-path: pyproject.toml
           environments: ${{ matrix.environment }}
 
+      # the IPTS-20267 dataset is fetched from the data-v1 release (pooch),
+      # not tracked in git; cache it across runs so it downloads once
+      - name: Cache example dataset
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/neutronimaging
+          key: nis-example-dataset-data-v1
+
+      # prime the cache explicitly so an unreachable asset or hash mismatch
+      # fails the job loudly rather than silently skipping the data tests
+      - name: Fetch example dataset
+        run: pixi run -e ${{ matrix.environment }} fetch-data
+
       - name: Run unit tests
         run: pixi run -e ${{ matrix.environment }} test
 
