@@ -37,8 +37,8 @@ dependencies = [
 # Timepix chip-geometry correction (--chipcorrection /
 # apply_chip_correction=True); only pre-releases on PyPI so far
 chipcorrection = ["timepix-geometry-correction>=0.2.0.dev7"]
-# only the example notebooks need plotting
-jupyter = ["matplotlib", "ipympl"]
+# only the example notebooks need plotting; pooch fetches the example dataset
+jupyter = ["matplotlib", "ipympl", "pooch"]
 
 [project.scripts]
 mcp_detector_correction = "neutronimaging.cli.mcp_detector_correction:main"
@@ -139,12 +139,14 @@ python = "3.14.*"
 [tool.pixi.feature.test.dependencies]
 pytest = ">=9.0.3" # CVE-2025-71176 fixed in 9.0.3
 pytest-cov = "*"
+pooch = "*" # fetches the externalized IPTS-20267 example dataset on demand
 
 [tool.pixi.feature.jupyter.dependencies]
 nbconvert = "*"
 ipykernel = "*"
 matplotlib = "*"
 ipywidgets = "*"
+pooch = "*" # the example notebook fetches the dataset via neutronimaging.datasets
 
 [tool.pixi.feature.developer.dependencies]
 pip = ">=26.0"     # CVE-2026-1703
@@ -154,6 +156,7 @@ versioningit = "*"
 
 [tool.pixi.tasks]
 test = { description = "Run the test suite", cmd = "pytest" }
+fetch-data = { description = "Download the IPTS-20267 example dataset into the pooch cache", cmd = "python -m neutronimaging.datasets" }
 clean = { cmd = "rm -rf .pytest_cache .ruff_cache **/*.egg-info **/dist **/__pycache__", description = "Clean up caches and build artifacts" }
 
 ##############

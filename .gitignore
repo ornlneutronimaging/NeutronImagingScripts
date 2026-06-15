@@ -366,3 +366,7 @@ neutronimaging/_version.py
 
 # notebook by-products (the example notebook writes them next to itself)
 example/*.npz
+
+# IPTS-20267 example/test dataset — externalized to the data-v1 release and
+# fetched on demand via neutronimaging.datasets (pooch). No longer tracked.
+/data/

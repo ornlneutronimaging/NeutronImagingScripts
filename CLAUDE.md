@@ -14,8 +14,12 @@ occupancy correction (VENUS) and CG1D configuration generation.
 
 Pixi-managed — run everything through `pixi run`.
 
-- `pixi run test` — pytest (the suite reads the shipped `data/` tree; the
-  916-frame load makes it ~30-90 s)
+- `pixi run test` — pytest (the data-dependent tests read the IPTS-20267
+  dataset; it is fetched on first run via pooch, then the 916-frame load
+  makes the suite ~30-90 s). Tests skip rather than fail if the dataset is
+  unreachable.
+- `pixi run fetch-data` — pre-download the example dataset into the pooch
+  cache (CI runs this before the tests so a missing asset fails loudly)
 - `pixi run pre-commit run --all-files` — lint (ruff, codespell, gitleaks,
   yamllint, taplo)
 - Console commands from the editable install: `mcp_detector_correction`,
@@ -35,8 +39,10 @@ Pixi-managed — run everything through `pixi run`.
 
 ## Branch model
 
-`main` only (decided 2026-06-10). The remote `next`/`qa` branches are frozen
-pre-2026 relics.
+`main` only (decided 2026-06-10). The stale `next`/`qa` relic branches and
+all merged feature branches were deleted 2026-06-15; the only non-`main`
+remotes left are Jean's unmerged WIP (`11_pixi`, `8_tof_normalization`) and
+`item376_autonorm_mars`.
 
 ## Conventions and caveats
 
@@ -44,10 +50,17 @@ pre-2026 relics.
   browse them on GitHub). NEVER clear outputs — re-execute instead; figures
   must be static (`%matplotlib inline`), not widget renders. The notebooks
   write `.npz` by-products next to themselves; those are gitignored.
-- `data/` is ~571 MB of plain git objects, shared by tests and examples.
-  Externalization (release asset / pooch) is an open decision — do not adopt
-  LFS (tried and deliberately abandoned in ef81aed).
-- Golden profiles `data/ref_*.npz` regenerate only via
+- `data/` (the ~570 MB IPTS-20267 dataset shared by tests and examples) is
+  externalized: untracked from git (gitignored), published as the `data-v1`
+  release asset `nis-test-data-v1.tar.gz`, and fetched on demand by
+  `neutronimaging.datasets` (pooch). `example_data_dir()` resolves it
+  ($NEUTRONIMAGING_DATA_DIR → a populated local `data/` → download);
+  `ensure_repo_data()` materializes it at `data/` for the notebooks. Bump the
+  tag + sha256 in `datasets.py` together if the dataset changes. Do NOT adopt
+  LFS (tried and deliberately abandoned in ef81aed). The 274 MB of history is
+  intentionally left intact — a `git filter-repo` purge to shrink clones is a
+  separate, coordinate-with-Jean follow-up (it rewrites his branch SHAs).
+- Golden profiles `ref_*.npz` (inside the dataset) regenerate only via
   `scripts/regenerate_test_refs.py` after a reviewed behavior change.
 - The auto gamma filter in `detector_correction.load_images` replicates
   NeuNorm 1.x exactly (dtype-max-minus-5 threshold, zero-padded 8-neighbor
