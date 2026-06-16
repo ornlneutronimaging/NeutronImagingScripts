@@ -1,0 +1,64 @@
+name: Publish to PyPI
+
+# Release flow: tag on main (vX.Y[.Z]) -> build sdist+wheel -> trusted-publish.
+# Versioningit derives the version from the tag, so a clean v1.6 tag yields a
+# clean 1.6 release (untagged commits build dev versions and are NOT published
+# here because only tag pushes trigger this workflow).
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build distribution
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          # versioningit needs the full history and tags to compute the version
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Build sdist and wheel
+        # build isolation pulls hatchling + versioningit from
+        # [build-system].requires; no pixi needed for a pure build
+        run: |
+          python -m pip install --upgrade build
+          python -m build
+
+      - name: Upload distribution artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+          if-no-files-found: error
+
+  publish:
+    name: Publish to PyPI
+    needs: build
+    runs-on: ubuntu-latest
+    # Trusted publisher is bound to this environment name on PyPI; configure a
+    # protection rule on the `pypi` environment in repo settings to gate it.
+    environment:
+      name: pypi
+      url: https://pypi.org/p/NeutronImaging
+    permissions:
+      id-token: write # OIDC token for PyPI trusted publishing
+    steps:
+      - name: Download distribution artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@cef221092ed1bacb1cc03d23a2d87d1d172e277b # v1.14.0
