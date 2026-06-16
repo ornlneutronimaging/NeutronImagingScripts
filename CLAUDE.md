@@ -32,8 +32,13 @@ Pixi-managed — run everything through `pixi run`.
 - versioningit from git tags; `neutronimaging/_version.py` is generated and
   gitignored. Dev versions read `1.5.0.dev*` because tag v1.5 is not an
   ancestor of main — the explicit v1.6 release tag supersedes this.
-- No publish automation by decision (no known downstream pip consumers);
-  release = tag on main → `python -m build` + twine.
+- Release = tag on main (`v*`). A push of a `v*` tag triggers
+  `.github/workflows/publish.yml`, which builds the sdist+wheel and uploads to
+  PyPI via OIDC trusted publishing (no API token). The publish job runs in the
+  `pypi` GitHub environment; the trusted publisher on PyPI is bound to owner
+  `ornlneutronimaging`, repo `NeutronImagingScripts`, workflow `publish.yml`,
+  environment `pypi`. (Supersedes the earlier "no publish automation" decision,
+  2026-06-16.) Untagged commits build dev versions and are not published.
 - License is MIT (team decision 2026-06-12, NDP standard) — this settled the
   historical GPLv3-file / BSD-setup.py / LGPLv2-classifier contradiction.
 
